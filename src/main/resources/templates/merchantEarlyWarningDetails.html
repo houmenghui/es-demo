@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <title>商户列表</title>
+    <meta name="Generator" content="Cocoa HTML Writer">
+    <meta name="CocoaVersion" content="1404.13">
+    <link rel="stylesheet" href="../static/css/merchantList.css">
+</head>
+<body>
+<div id="app" style="display: none">
+    <input id="loginToken" type="hidden" th:value="${loginToken}" >
+    <input id="agentNo" type="hidden" th:value="${agentNo}" >
+    <input id="queryScope" type="hidden" th:value="${queryScope}" >
+    <input id="warningId" type="hidden" th:value="${warningId}" >
+    <input id="contextPath" type="hidden" th:value="${contextPath}" >
+    <input id="isLogin" type="hidden" th:value="${isLogin}" >
+
+    <div class="main">
+        <ul>
+            <li v-for="item in merchantList" :key="item.merchantNo">
+                <a :href="'merchantDetail?merchantNo=' + item.merchantNo">
+                    <div class="left">
+                        <h3>{{item.directMerchant ? item.merchantName : item.mobilePhone}}</h3>
+                        <p>{{item.directMerchant ? item.mobilePhone : '所属代理: ' + item.agentName}}</p>
+                    </div>
+                    <!-- 交易下滑 -->
+                    <div class="right" v-if="merchantWarning.warningType === 'TRAN_SLIDE'">
+                        <span :class="{up: item.rate >= 0, down: item.rate < 0}"><i></i><em>{{Math.abs(item.rate)}}%</em></span>
+                        <p>上月较前月</p>
+                    </div>
+                    <!-- 无交易 -->
+                    <div class="right" v-else-if="merchantWarning.warningType === 'NO_TRAN'">
+                        <span class="up"><em>{{item.noTransDays}}</em></span>
+                        <p>无交易天数</p>
+                    </div>
+                    <!--UNCERTIFIED 未认证,无right -->
+                    <div class="right" v-else>
+                        <!--<span class="up"><em>{{item.noTransDays}}</em></span>-->
+                        <!--<p>无交易天数</p>-->
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div id="loading" class="loading" :style="styles"><img src="../static/img/loading.gif"></div>
+
+    <div class="loading_tips" v-show="showNoMore">没有更多数据了</div>
+    <div class="empty" v-show="showEmpty">
+        <img src="../static/img/default_empty@2x.png">
+        <p>暂时没有商户</p>
+    </div>
+    <div class="backtop" id="backtop" onclick="backTop()"><img src="../static/img/back.png"></div>
+
+</div>
+</body>
+<script src="../static/js/vue-min.js"></script>
+<script src="../static/js/axios.min.js"></script>
+<script type="text/javascript">
+    let loginToken = document.getElementById("loginToken").value;
+    let agentNo = document.getElementById("agentNo").value;
+    let queryScope = document.getElementById("queryScope").value;
+    let warningId = document.getElementById("warningId").value;
+    let contextPath = document.getElementById("contextPath").value;
+    let isLogin = document.getElementById("isLogin").value;
+    let loading = document.getElementById("loading");
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            message: 'Hello Vue!',
+            merchantList: [],
+            merchantWarning: {},
+            pageNo: 1,
+            pageSize: 500,
+            loginToken: loginToken,
+            searchParams: {
+                queryScope: queryScope || 'ALL',
+                agentNo: agentNo,
+                warningId: warningId
+            },
+            showNoMore: false,
+            showEmpty: false,
+            styles:{display:"none"},
+            inRequesting: false         // 是否正在请求中,是的话则不再重复请求,避免数据重复
+        },
+        mounted: function () {
+            document.getElementById("app").style.display = 'block';
+            this.queryMerchantEarlyWarningDetails();
+        },
+        methods: {
+            queryMerchantEarlyWarningDetails: function () {
+                let self = this;
+                self.styles.display = "block";
+                if (isLogin === 'false') {
+                    self.showNoMore = true;
+                    self.styles.display = "none";
+                    return;
+                }
+                if (this.inRequesting) {
+                    self.styles.display = "none";
+                    return;
+                }
+                this.inRequesting = true;
+                axios.post(`${contextPath}/data/queryMerchantEarlyWarningDetails/${this.pageNo}/${this.pageSize}?LOGIN_TOKEN=${this.loginToken}`, this.searchParams)
+                    .then(function (response) {
+                        let resultData = response.data || {};
+                        self.merchantWarning = resultData && resultData.data && resultData.data.merchantWarning || {};
+                        let merchantList = resultData && resultData.data && resultData.data.merchantList || [];
+                        if (!resultData.success || merchantList.length === 0) {
+                            self.showNoMore = self.merchantList.length > 0;
+                            self.showEmpty = self.merchantList.length === 0;
+                            self.styles.display = "none";
+                            return;
+                        }
+                        self.merchantList.push(...merchantList);
+                        self.pageNo++;
+                        self.inRequesting = false;
+                        self.styles.display = "none";
+                    });
+            }
+        }
+    });
+    window.onscroll = function () {
+        //文档内容高度
+        var scrollHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+        //滚动条滚动距离
+        var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+        //窗口可视范围高度
+        var clientHeight = window.innerHeight || Math.min(document.documentElement.clientHeight, document.body.clientHeight);
+
+        if (clientHeight + scrollTop >= scrollHeight) {
+            console.log("===加载更多内容……===");   //加载更多
+            app.queryMerchantEarlyWarningDetails();
+        }
+        var bkTop = document.getElementById("backtop")
+        if(scrollTop>80){
+            bkTop.style.display = "block"
+        } else{
+            bkTop.style.display = "none"
+        }
+    };
+    function backTop() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    }
+</script>
+</html>

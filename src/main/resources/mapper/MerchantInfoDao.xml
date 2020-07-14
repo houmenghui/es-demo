@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.MerchantInfoDao">
+
+    <select id="findBlacklist" resultType="map" >
+        select * from risk_roll
+        where roll_no=#{rollNo} and  roll_type=#{rollType}  and roll_belong=#{rollBelong}  and roll_status='1' limit 1
+    </select>
+    <select id="querySettleAccountNo" resultType="map" >
+        select * from pos_card_bin c
+        where  c.card_length = length(#{accountNo}) AND c.verify_code = left(#{accountNo},  c.verify_length)
+    </select>
+
+    <select id="queryAgeLimit" resultType="map" >
+        select PARAM_VALUE from sys_config where PARAM_KEY=#{PARAM_KEY}
+    </select>
+
+    <select id="queryCnaps" resultType="map" >
+        select cnaps_no ,bank_name  from pos_cnaps
+        where bank_name like concat("%",#{bank_name1},"%") and bank_name like concat("%",#{bank_name2},"%")
+    </select>
+
+    <select id="querySn" resultType="map" >
+        select * from terminal_info where  sn=#{sn}
+    </select>
+
+    <select id="checkAgentSn" resultType="map" >
+        select * from terminal_info where agent_no=#{agentNo} and sn=#{sn}
+    </select>
+
+    <select id="getMerProductList" resultType="map" >
+        SELECT i.* FROM business_product_define i LEFT JOIN agent_business_product abp on i.bp_id = abp.bp_id
+        WHERE	1 = 1 and date(i.sale_starttime) &lt;= curdate() and date(i.sale_endtime) >= curdate()
+         AND i.bp_type =#{merType}
+        AND i.effective_status = 1 AND abp.agent_no = #{agentNo}
+        AND abp.status = 1 AND EXISTS (SELECT 1 FROM business_product_hardware bph
+        WHERE 1 = 1 AND bph.hp_id IN( #{terType},0) AND bph.bp_id = i.bp_id)
+        ORDER BY abp.default_bp_flag DESC,i.bp_id ASC
+    </select>
+
+    <select id="getServiceInfoByParams" resultType="com.esdemo.modules.bean.ServiceInfo" >
+        select distinct si.service_id,si.* from service_info si
+		inner join business_product_info  bpi on si.service_id = bpi.service_id
+		inner join agent_business_product abp on abp.bp_id = bpi.bp_id
+		where abp.agent_no=#{agent_no} and abp.bp_id=#{bp_id} and si.effective_status = 1
+    </select>
+
+    <select id="queryBpId" resultType="map" >
+        select team_id from business_product_define where bp_id=#{bpId}
+    </select>
+
+    <select id="queryMerchantInfo" resultType="map" >
+        select m.merchant_no,m.merchant_name,agent_no from merchant_info m
+        where m.team_id=#{params.teamId}
+        <if test="params.mobilephone" >
+            and m.mobilephone=#{params.mobilephone}
+        </if>
+    </select>
+
+    <select id="getServiceRatedByParams" resultType="com.esdemo.modules.bean.ServiceRate" >
+        SELECT smr.*,si.fixed_rate,si.service_name
+        FROM business_product_info bpi
+        INNER JOIN service_manage_rate smr ON bpi.service_id= smr.service_id
+        INNER JOIN service_info si ON si.service_id = bpi.service_id
+        WHERE bpi.bp_id=#{bp_id} AND smr.agent_no=#{one_agent_no} and si.effective_status = 1
+    </select>
+
+    <select id="getServiceQuotaByParams" resultType="com.esdemo.modules.bean.ServiceQuota" >
+        SELECT smq.* ,si.fixed_quota,si.service_name
+        FROM business_product_info bpi
+        INNER JOIN service_manage_quota smq ON bpi.service_id= smq.service_id
+        INNER JOIN service_info si ON si.service_id = bpi.service_id
+        WHERE bpi.bp_id=#{bp_id} AND smq.agent_no=#{one_agent_no} and si.effective_status = 1
+    </select>
+
+    <select id="getRequireItemByParams" resultType="com.esdemo.modules.bean.AddRequireItem" >
+        select ari.* from add_require_item ari
+        inner join business_require_item bri on bri.br_id = ari.item_id
+        inner join business_product_define bpd on bri.bp_id = bpd.bp_id
+        inner join agent_business_product abp on abp.bp_id = bpd.bp_id
+        inner join agent_info ai on ai.agent_no = abp.agent_no
+        where ai.agent_no=#{agent_no} and abp.bp_id=#{bp_id} and ari.example_type='1'
+        ORDER BY item_id
+    </select>
+
+    <select id="queryMerType" resultType="map" >
+        SELECT sys_name sysName,sys_value sysValue FROM sys_dict WHERE sys_key=#{syskey} and parent_id=#{parentId}
+    </select>
+
+    <select id="countMerByIdCardInTeam" resultType="map" >
+        select count(1) reg_count,m.id_card_no,m.team_id
+        from merchant_info m where m.id_card_no = #{id_card_no} and m.team_id = #{team_id}
+    </select>
+
+    <select id="countMerByIdCard" resultType="map" >
+        select count(1) reg_count,m.id_card_no,m.team_id
+        from merchant_info m where m.id_card_no = #{id_card_no}
+    </select>
+
+    <select id="getServiceRateReq" resultType="map" >
+        SELECT smr.*,si.fixed_rate,si.service_name FROM business_product_info bpi
+        INNER JOIN service_manage_rate smr ON bpi.service_id= smr.service_id
+        INNER JOIN service_info si ON si.service_id = bpi.service_id
+        WHERE bpi.bp_id=#{bp_id}AND smr.agent_no=#{one_agent_no} and si.fixed_rate = '0' and si.effective_status = 1
+    </select>
+
+    <select id="getServiceQuotaReq" resultType="map" >
+        SELECT smq.* ,si.fixed_quota,si.service_name FROM business_product_info bpi
+        INNER JOIN service_manage_quota smq ON bpi.service_id= smq.service_id
+        INNER JOIN service_info si ON si.service_id = bpi.service_id
+        WHERE bpi.bp_id=#{bp_id} AND smq.agent_no=#{one_agent_no} and si.fixed_quota = '0'  and si.effective_status = 1
+    </select>
+
+    <select id="selectRiskRule" resultType="map" >
+        select * from risk_rules where rules_no = #{ruleNo} and status='1'
+    </select>
+
+    <select id="isApprove" resultType="integer" >
+        SELECT is_approve FROM agent_info WHERE agent_no=#{oneAgentNO}
+    </select>
+
+    <select id="queryAuditorManager" resultType="map" >
+        SELECT auditor_id FROM auditor_manager WHERE bp_id=#{bpId} and status = '1'
+    </select>
+
+    <select id="isSuperPuserUser" resultType="map" >
+        SELECT * FROM super_push_user WHERE user_id = #{userId}
+    </select>
+
+    <insert id="updateMerGroupCity" parameterType="string">
+        INSERT INTO trans_route_group_merchant (pos_merchant_no,service_type,group_code,create_time,create_person
+        ) SELECT mi.merchant_no,si.service_type,IFNULL((SELECT g.group_code FROM trans_route_group g,acq_service ase
+        WHERE g.group_province = mi.province AND g.group_city IN (mi.city, '不限') AND dg.start_pc = 1
+        AND dg.acq_org_id = g.acq_id AND g.acq_service_id = ase.id AND ase.service_type = dg.acq_service_type
+        AND g.route_type IN ('1', '2') ORDER BY CASE g.group_city
+        WHEN mi.city THEN 2 WHEN '不限' THEN 1 ELSE 0 END DESC LIMIT 1 ),dg.def_group_code ) group_code,
+        SYSDATE(),'admin' FROM merchant_info mi,merchant_service ms,service_info si,def_trans_route_group dg
+        WHERE ms.service_id = si.service_id AND ms.merchant_no = mi.merchant_no  AND mi.merchant_no = #{merNo}
+        AND NOT EXISTS (SELECT 1 FROM trans_route_group_merchant gm WHERE gm.pos_merchant_no = mi.merchant_no
+        AND gm.service_type = si.service_type) AND si.service_id = dg.service_id
+    </insert>
+
+    <insert id="addMerInfo" parameterType="map">
+        insert into merchant_info(address,one_agent_no,agent_no,business_type,city,create_time,
+        creator,email,id_card_no,industry_type,last_update_time,
+        lawyer,mender,merchant_no,merchant_name,merchant_type,
+        mobilephone,operator,parent_node,district,
+        province,remark,sale_name,team_id,status,mer_account,register_source)
+        values(#{params.address},#{params.oneAgentNo},#{params.agentNo},#{params.businessType},#{params.city},now(),
+        #{params.creator},#{params.email},#{params.idCardNo},#{params.industryType},now(),
+        #{params.lawyer},#{params.mender},#{params.merchantNo},#{params.merchantName},#{params.merchantType},
+        #{params.mobilephone},#{params.operator},#{params.parentNode},#{params.district},
+        #{params.province},#{params.remark},#{params.saleName},#{params.teamId},'1','1','2')
+    </insert>
+
+    <insert id="addMerService" parameterType="map">
+        insert into merchant_service(bp_id,merchant_no,service_id,create_date,status)
+        values (#{params.bpId},#{params.merchantNo},#{params.service_id},now(),'1')
+    </insert>
+
+    <insert id="addMerServiceRate" parameterType="map">
+        insert into merchant_service_rate(capping,card_type,disabled_date,efficient_date,useable,holidays_mark,
+        merchant_no,rate,rate_type,safe_line,service_id,single_num_amount,ladder1_rate,ladder1_max,ladder2_rate)
+        values(#{params.capping},#{params.cardType},#{params.disabledDate},now(),'1',#{params.holidaysMark},
+        #{params.merchantNo},#{params.rate},#{params.rateType},#{params.safeLine},#{params.serviceId},
+        #{params.singleNumAmount},#{params.ladder1Rate},#{params.ladder1Max},#{params.ladder2Rate})
+    </insert>
+
+    <insert id="addMerServiceQuota" parameterType="map">
+        insert into merchant_service_quota(card_type,disabled_date,efficient_date,useable,holidays_mark,merchant_no,
+        service_id,single_count_amount,single_day_amount,single_daycard_amount,
+        single_daycard_count,single_min_amount)
+        values (#{params.cardType},#{params.disabledDate},now(),'1',#{params.holidaysMark},#{params.merchantNo},
+        #{params.serviceId},#{params.singleCountAmount},#{params.singleDayAmount},#{params.singleDaycardAmount},
+        #{params.singleDaycardCount},#{params.singleMinAmount})
+    </insert>
+
+    <insert id="addMerRequireItem" parameterType="com.esdemo.modules.bean.MerRequireItem">
+        insert into merchant_require_item(content,merchant_no,mri_id,status)
+        values(#{params.content},#{params.merchantNo},#{params.mriId},#{params.status})
+    </insert>
+
+    <update id="updateMerRequireItem" parameterType="com.esdemo.modules.bean.MerRequireItem">
+        update  merchant_require_item
+        set content = #{item.content},
+            mri_id = #{item.mriId} ,
+            status = '0'
+        where merchant_no = #{merchantNo}
+        and mri_id = #{item.mriId}
+    </update>
+
+    <update id="updateMerchant">
+        update merchant_info
+        set
+        <if test="merchantInfo.lawyer != null and merchantInfo.lawyer != ''">
+            lawyer = #{merchantInfo.lawyer},
+        </if>
+        <if test="merchantInfo.idCardNo != null and merchantInfo.idCardNo != ''">
+            id_card_no = #{merchantInfo.idCardNo},
+        </if>
+        <if test="merchantInfo.address != null and merchantInfo.address != ''">
+            address = #{merchantInfo.address},
+        </if>
+        <if test="merchantInfo.city != null and merchantInfo.city  != ''">
+            city = #{merchantInfo.city},
+        </if>
+        <if test="merchantInfo.province != null and merchantInfo.province != ''">
+            province = #{merchantInfo.province},
+        </if>
+        <if test="merchantInfo.district != null and merchantInfo.district != ''">
+            district = #{merchantInfo.district},
+        </if>
+        last_update_time=now()
+        where merchant_no = #{merchantNo}
+    </update>
+
+    <update id="updateMbpStatus">
+      update merchant_business_product
+      set last_update_time=now(),
+      status=#{status}
+      where merchant_no=#{merchantNo}
+    </update>
+
+    <delete id="deleteExaminationsLog">
+    DELETE from examinations_log
+    WHERE item_no IN (
+      SELECT mbp.id FROM merchant_business_product mbp WHERE mbp.merchant_no = #{merchantNo}
+    )
+    </delete>
+
+    <insert id="addMerBusinessProduct" parameterType="map">
+        insert into merchant_business_product(bp_id,create_time,merchant_no,sale_name,auditor_id,status,item_source)
+        values(#{params.bpId},now(),#{params.merchantNo},#{params.saleName},#{params.auditorId},#{params.isApprove},'2')
+    </insert>
+
+    <select id="queryMerListBykey" resultType="map">
+        SELECT merchant_no, merchant_name FROM merchant_info WHERE parent_node LIKE concat(#{agentNode}, '%')
+        AND (merchant_no = #{merchantKey} OR POSITION(#{merchantKey} IN merchant_name)) ORDER BY id DESC LIMIT 10
+    </select>
+
+    <select id="querybpd" resultType="map">
+        SELECT bpd.bp_id,bpd.bp_name  ,bpd.bp_type , bpd.remark ,bpd.allow_individual_apply allowIndividualApply,bpg.group_no groupNo
+        FROM business_product_define  bpd
+        JOIN agent_business_product abp ON bpd.bp_id= abp.bp_id
+        LEFT JOIN business_product_group bpg ON bpg.bp_id = bpd.bp_id
+        WHERE bpd.bp_id=abp.bp_id AND  abp.agent_no=#{agentNo} AND abp.status='1'
+        and bpd.effective_status = 1
+    </select>
+
+    <select id="getHardwareProductByAgentOem" resultType="map">
+        select * from hardware_product hp where EXISTS(SELECT 1 FROM agent_business_product ap, business_product_hardware h
+        WHERE ap.agent_no = #{agentNo} AND ap.bp_id = h.bp_id  AND h.hp_id = hp.hp_id)
+    </select>
+
+    <select id="getHardwareProduct" resultType="map">
+        select hp_id,version_nu,type_name from  hardware_product
+    </select>
+
+    <select id="selectServiceList" resultType="map">
+        select si.* from service_info si
+        join business_product_info bpi on bpi.service_id = si.service_id
+        where bpi.bp_id = #{bpId}
+    </select>
+
+    <select id="getAgentBusiness" resultType="map">
+        select bpd.bp_id,bpd.bp_name from business_product_define  bpd, agent_business_product abp
+        where bpd.bp_id=abp.bp_id and  abp.agent_no=#{agentNo} and abp.status='1'
+        and bpd.effective_status = 1 order by bpd.bp_name
+    </select>
+
+    <select id="getMerMobilephone" resultType="map" >
+        SELECT 	ui.*,  ue_m.user_id  userid_m,ue_m.entity_id entity_id_m
+        FROM user_info ui LEFT JOIN user_entity_info ue_m ON ui.user_id = ue_m.user_id
+        AND ue_m.user_type = '2' and ue_m.apply='2'
+        where  ui.mobilephone = #{mobilephone} AND ui.team_id = #{teamID}
+    </select>
+
+    <select id="selectByMerchantNo" resultType="com.esdemo.modules.bean.MerchantInfo">
+        select * from  merchant_info where merchant_no = #{merchant_no}
+    </select>
+
+    <insert id="insertMerchantUserEntity" >
+        insert into user_entity_info(user_id,user_type,entity_id,apply,manage,status)
+        values(#{userId},2,#{merchantNo},2,0,1)
+    </insert>
+
+    <update id="updateUserName" >
+        update user_info set user_name = #{userName} where user_id = #{userId}
+    </update>
+
+    <update id="updateEntity" >
+        update user_entity_info set entity_id = #{entity_id} where user_id = #{userId} and user_type='2' and apply='2'
+    </update>
+
+    <select id="getMobilephone" resultType="com.esdemo.modules.bean.UserInfo" >
+        SELECT mobilephone FROM user_info ui,user_entity_info uei
+        WHERE ui.user_id=uei.user_id AND uei.apply='1' AND uei.user_type='1'
+        AND ui.mobilephone = #{mobilephone} AND ui.team_id = #{teamID}
+    </select>
+
+    <insert id="insertAgentUserEntity" parameterType="com.esdemo.modules.bean.UserEntityInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into user_entity_info(user_id,user_type,manage,status,entity_id,apply,last_notice_time)
+        values(#{userEntityInfo.userId},#{userEntityInfo.userType},#{userEntityInfo.manage},
+        #{userEntityInfo.status},#{userEntityInfo.entityId},#{userEntityInfo.apply},now())
+    </insert>
+
+    <insert id="insertUserInfo" parameterType="com.esdemo.modules.bean.UserInfo" >
+        insert into user_info(team_id,user_id,user_name,mobilephone,status,password,create_time,email)
+        values(#{userInfo.teamId},#{userInfo.userId},#{userInfo.userName},#{userInfo.mobilephone},'1',
+        #{userInfo.password},now(),#{userInfo.email})
+    </insert>
+
+    <update id="updateMerCountBymerNo" >
+        update merchant_info set mer_account=#{merCount} where merchant_no=#{merNo}
+    </update>
+
+    <select id="queryMerSerRate" resultType="map">
+        SELECT smr.service_id,smr.holidays_mark ,smr.card_type,smr.rate_type ,smr.single_num_amount ,smr.rate ,
+        smr.capping ,smr.safe_line, smr.ladder1_rate,smr.ladder1_max,smr.ladder2_rate,smr.ladder2_max,smr.ladder3_rate,
+        smr.ladder3_max,smr.ladder4_rate,smr.ladder4_max,si.service_name
+        FROM business_product_info bpi  INNER JOIN service_manage_rate smr ON bpi.service_id= smr.service_id
+        INNER JOIN service_info si on si.service_id = bpi.service_id AND si.fixed_rate='1'
+        WHERE bpi.bp_id=#{bp_id} AND smr.agent_no=#{one_agentNo}  and si.effective_status=1
+        UNION ALL SELECT  msr.service_id,msr.holidays_mark ,msr.card_type,msr.rate_type ,msr.single_num_amount ,
+        msr.rate ,msr.capping ,msr.safe_line , msr.ladder1_rate,msr.ladder1_max,msr.ladder2_rate,msr.ladder2_max,
+        msr.ladder3_rate,msr.ladder3_max,msr.ladder4_rate,msr.ladder4_max ,si.service_name
+        FROM merchant_business_product mbp
+        INNER JOIN business_product_info bpi ON bpi.bp_id= mbp.bp_id
+        INNER JOIN merchant_service_rate msr ON msr.service_id=bpi.service_id
+        INNER JOIN service_info si on si.service_id = bpi.service_id
+        WHERE mbp.merchant_no=#{merchant_no} AND mbp.bp_id=#{bp_id} AND msr.merchant_no=mbp.merchant_no
+        and si.effective_status = 1
+    </select>
+
+    <select id="queryMerSerQuota" resultType="map">
+        SELECT smq.service_id,smq.holidays_mark ,smq.card_type ,smq.single_day_amount ,smq.single_count_amount ,
+        smq.single_daycard_amount ,smq.single_daycard_count ,smq.single_min_amount,si.service_name
+        FROM business_product_info bpi
+        INNER JOIN service_manage_quota smq ON bpi.service_id= smq.service_id
+        INNER JOIN service_info si on si.service_id = bpi.service_id AND si.fixed_quota='1'
+        WHERE bpi.bp_id=#{bp_id} AND smq.agent_no=#{one_agentNo} and si.effective_status=1
+        UNION ALL
+        SELECT  msq.service_id,msq.holidays_mark ,msq.card_type,msq.single_day_amount ,msq.single_count_amount ,
+        msq.single_daycard_amount ,msq.single_daycard_count,msq.single_min_amount,si.service_name
+        FROM merchant_business_product mbp
+        INNER JOIN business_product_info bpi ON bpi.bp_id= mbp.bp_id
+        INNER JOIN merchant_service_quota msq ON msq.service_id=bpi.service_id
+        INNER JOIN service_info si ON si.service_id = bpi.service_id
+        WHERE mbp.merchant_no=#{merchant_no} AND mbp.bp_id=#{bp_id} AND msq.merchant_no=mbp.merchant_no
+        and si.effective_status=1
+    </select>
+
+    <select id="queryMerCardInfo" resultType="map">
+        SELECT  mri.* FROM merchant_require_item mri
+        INNER JOIN add_require_item ari ON mri.mri_id = ari.item_id
+        INNER JOIN business_require_item bri ON bri.br_id = ari.item_id
+        where mri.merchant_no=#{merchant_no} and bri.bp_id=#{bp_id} and ari.example_type='3'
+    </select>
+
+    <select id="queryMerInfo" resultType="com.esdemo.modules.bean.MerchantInfo">
+        select * from  merchant_info where merchant_no =#{merchant_no}
+    </select>
+
+    <select id="queryTypeMcc" resultType="map">
+        SELECT sys_name FROM sys_dict WHERE sys_key=#{syskey} and sys_value=#{sysValue}
+    </select>
+
+    <select id="queryTerRequireItem" resultType="map">
+        SELECT  mri.*,ari.photo_address,ari.item_name itemName ,ari.example_type exampleType ,ari.check_msg checkMsg ,ari.check_status checkStatus ,
+         ari.photo_address photoAddress ,ari.photo, ari.data_all dataAll ,ari.remark FROM merchant_require_item mri
+        INNER JOIN add_require_item ari ON mri.mri_id = ari.item_id
+        INNER JOIN business_require_item bri ON bri.br_id = ari.item_id
+        where mri.merchant_no=#{merchant_no} and bri.bp_id=#{bp_id} and ari.example_type='1'
+        ORDER BY CAST(mri.mri_id AS SIGNED)
+    </select>
+
+    <select id="getFunctionManage" resultType="map">
+        select * from function_manage where function_number = #{code}
+    </select>
+
+    <select id="getFunctionManageByAgentNo" resultType="map">
+        select * from agent_function_manage where agent_no = #{agentNo} and function_number = #{code}
+    </select>
+
+    <select id="getAcqMerInfoByAcqIntoNo" resultType="map">
+        select am.id,am.merchant_type,am.merchant_name,am.legal_person,am.legal_person_id,
+        DATE_FORMAT(am.id_valid_start,'%Y-%c-%d') id_valid_start,DATE_FORMAT(am.id_valid_end,'%Y-%c-%d') id_valid_end,
+        am.province,am.city,am.district,am.address,
+        am.one_scope,(SELECT sys_name FROM sys_dict where sys_key='sys_mcc' and sys_value=am.one_scope) one_scope_name,
+        am.two_scope,(SELECT sys_name FROM sys_dict where sys_key='sys_mcc' and sys_value=am.two_scope) two_scope_name,
+        am.charter_name,am.charter_no,
+        DATE_FORMAT(am.charter_valid_start,'%Y-%c-%d') charter_valid_start,
+        DATE_FORMAT(am.charter_valid_end,'%Y-%c-%d') charter_valid_end,
+        am.account_type,am.bank_no,am.account_name,am.account_bank,am.account_province,am.account_city,
+        am.account_district,am.bank_branch,am.line_number,am.acq_into_no,am.into_source,am.audit_status,am.audit_time,
+        am.create_time,am.update_time,am.agent_no,am.one_agent_no,am.mcc,am.general_merchant_no,am.change_mer_business_info,
+        (SELECT examination_opinions FROM acq_merchant_info_log where acq_merchant_info_id=am.id
+        ORDER BY create_time DESC LIMIT 1) examination_opinions
+        from  acq_merchant_info am
+        where am.acq_into_no = #{acqIntoNo}
+    </select>
+
+    <select id="getAcqMerInfoIdFile" resultType="map">
+        select * from  acq_merchant_file_info where acq_into_no = #{acqIntoNo}
+    </select>
+
+    <insert id="addAcqMerFileInfo" parameterType="map" >
+        INSERT INTO acq_merchant_file_info (create_time, file_type, file_url, status, acq_into_no)
+        VALUES (now(), #{map.file_type}, #{map.file_url}, '1', #{map.acq_into_no})
+    </insert>
+
+    <update id="updateAcqMerFileInfo" parameterType="map" >
+        UPDATE acq_merchant_file_info SET file_url=#{map.file_url}, status='1'
+        WHERE (file_type=#{map.file_type} and acq_into_no=#{map.acq_into_no})
+    </update>
+
+    <update id="updateAcqMerFileInfoStatus">
+        UPDATE acq_merchant_file_info SET audit_status=1
+        WHERE acq_into_no=#{acq_into_no}
+    </update>
+    
+    <select id="getAcqMerMccList" resultType="map">
+        SELECT sys_name value,sys_value 'key' FROM sys_dict WHERE sys_key=#{sysKey} AND parent_id=#{parentId}
+    </select>
+
+</mapper>

@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.MerchantDao">
+    <select id="getTeamNameByTeamId" resultType="string">
+        SELECT team_name FROM app_info WHERE team_id = #{teamId} limit 1
+    </select>
+
+
+    <select id="getEntryTeamByTeamId" resultType="map">
+        SELECT
+        *
+        FROM team_info_entry
+        WHERE team_id = #{teamId}
+    </select>
+
+    <select id="listBpNameByBpIds" resultType="map">
+        SELECT
+          bp_id,
+          bp_name
+        FROM business_product_define
+        WHERE bp_id IN
+        <foreach collection="bpIds" item="bpId" separator="," open="(" close=")">
+            #{bpId}
+        </foreach>
+        and effective_status = '1'
+    </select>
+
+    <select id="listTeamNameByAgentNo" resultType="map">
+        SELECT ti.team_id, ti.team_name
+        FROM team_info ti
+        WHERE EXISTS(
+            SELECT 1 FROM agent_business_product abp
+            JOIN business_product_define bpd ON abp.bp_id = bpd.bp_id
+            WHERE abp.agent_no = #{agentNo}
+            AND ti.team_id = bpd.team_id
+            and abp.status='1'
+            and bpd.effective_status = 1
+        )
+    </select>
+
+
+    <!--<select id="listBpByAgentNo" resultType="map">-->
+        <!--SELECT bpd.team_id, bpd.bp_id, bpd.bp_name-->
+        <!--FROM agent_business_product abp-->
+        <!--JOIN business_product_define bpd ON abp.bp_id = bpd.bp_id-->
+        <!--WHERE abp.agent_no = #{agentNo}-->
+        <!--and abp.status='1'-->
+        <!--and bpd.effective_status = 1-->
+    <!--</select>-->
+
+    <select id="listBusinessProductByAgentNo" resultType="map">
+        SELECT
+          bpd.team_id,
+          bpd.bp_id bpId,
+          bpd.bp_name bpName
+        FROM business_product_define bpd
+        JOIN agent_business_product abp ON abp.bp_id = bpd.bp_id
+        WHERE abp.agent_no = #{agentNo}
+        and abp.status='1'
+        and bpd.effective_status = 1
+    </select>
+
+    <select id="listHardwareByMerchantNo" resultType="com.esdemo.modules.bean.KeyValueBean">
+        SELECT
+          ti.SN `key`,
+          hp.type_name `value`,
+          '已使用' description
+        FROM terminal_info ti
+        LEFT JOIN hardware_product hp ON hp.hp_id = ti.type
+        WHERE ti.agent_node LIKE concat(#{agentNode}, '%')
+        AND ti.merchant_no = #{merchantNo}
+    </select>
+
+    <select id="queryMerchantInfoByNo" resultType="com.esdemo.modules.bean.MerchantInfo">
+        SELECT
+          mi.merchant_no,
+          mi.merchant_name,
+          mi.merchant_type,
+          mi.province,
+          mi.city,
+          mi.district,
+          mi.address,
+          mi.mobilephone,
+          mi.create_time,
+          mi.status,
+          mi.lawyer,
+          mi.parent_node,
+          mi.one_agent_no,
+          mi.agent_no,
+          ai.agent_name,
+          mi.hlf_active,
+          mi.team_id,
+          ai.one_level_id oneAgentNo
+        FROM merchant_info mi
+        join agent_info ai on ai.agent_no = mi.agent_no
+        WHERE mi.merchant_no = #{merchantNo}
+        limit 1
+    </select>
+
+    <select id="listCanReplaceBp" resultType="com.esdemo.modules.bean.MerchantBpBean">
+        SELECT
+            mbp.id mbpId,
+            bpd.bp_id bpId,
+            bpd.bp_name bpName
+        FROM merchant_business_product mbp
+        JOIN business_product_define bpd ON bpd.bp_id = mbp.bp_id
+        WHERE EXISTS(
+            SELECT 1 FROM business_product_group bpg
+            WHERE bpg.bp_id = mbp.bp_id
+        )
+        and mbp.merchant_no = #{merchantNo}
+        AND bpd.effective_status = '1'
+    </select>
+
+    <select id="listOtherBpInTheSameGroup" resultType="com.esdemo.modules.bean.MerchantBpBean">
+        SELECT bpd.bp_id bpId, bpd.bp_name bpName FROM business_product_define bpd
+        JOIN (
+            SELECT * FROM business_product_group bpg
+            WHERE bpg.group_no IN (
+              SELECT group_no FROM business_product_group WHERE bp_id = #{bpId}
+            )
+        )t ON t.bp_id = bpd.bp_id
+        WHERE bpd.bp_id &lt;&gt; #{bpId}
+        AND bpd.effective_status = '1'
+        AND EXISTS (
+            SELECT 1 FROM agent_business_product abp
+            WHERE abp.bp_id = bpd.bp_id
+            AND abp.agent_no = #{agentNo}
+            AND abp.status = 1
+        )
+    </select>
+
+    <select id="listOtherAndUnUseBpInTheSameGroup" resultType="com.esdemo.modules.bean.MerchantBpBean">
+        SELECT bpd.bp_id bpId, bpd.bp_name bpName FROM business_product_define bpd
+        JOIN (
+            SELECT * FROM business_product_group bpg
+            WHERE bpg.group_no IN (
+              SELECT group_no FROM business_product_group WHERE bp_id = #{bpId}
+            )
+        )t ON t.bp_id = bpd.bp_id
+        WHERE bpd.effective_status = '1'
+        AND EXISTS (
+            SELECT 1 FROM agent_business_product abp
+            WHERE abp.bp_id = bpd.bp_id
+            AND abp.agent_no = #{agentNo}
+            AND abp.status = 1
+        )
+        AND NOT EXISTS (
+            SELECT 1 FROM merchant_business_product mbp
+            WHERE mbp.bp_id = bpd.bp_id
+            AND mbp.merchant_no = #{merchantNo}
+        )
+    </select>
+
+    <select id="countMerchantBpInfo" resultType="int">
+        select count(*) from merchant_business_product
+        where merchant_no =#{merchantNo}
+        and bp_id =#{bpId}
+        and status = '4'
+    </select>
+
+    <select id="countTerminalBpInfo" resultType="int">
+        select count(*) from terminal_info
+        where merchant_no =#{merchantNo}
+        and bp_id =#{bpId}
+        and open_status ='2'
+    </select>
+
+    <update id="updateMerchantTerminal">
+        update terminal_info set bp_id=#{newBpId}
+        where merchant_no=#{merchantNo}
+        and bp_id =#{oldBpId}
+        and open_status ='2'
+    </update>
+
+    <update id="updateMerchantBusinessProduct">
+        UPDATE merchant_business_product
+        SET bp_id = #{newBpId},
+            item_source = '2',
+            auditor_id = '1',
+            STATUS = '4',
+            last_update_time = CURRENT_TIMESTAMP
+        WHERE merchant_no = #{merchantNo}
+        AND   bp_id = #{oldBpId}
+    </update>
+
+    <insert id="insertMerBusProHis">
+        insert merchant_business_product_history(
+            source_bp_id,
+            new_bp_id,
+            operation_type,
+            operation_person_type,
+            create_time,
+            operation_person_no,
+            merchant_no
+        )
+        values(
+          #{mbpHis.sourceBpId},
+          #{mbpHis.newBpId},
+          #{mbpHis.operationType},
+          #{mbpHis.operationPersonType},
+          #{mbpHis.createTime},
+          #{mbpHis.operationPersonNo},
+          #{mbpHis.merchantNo}
+        )
+    </insert>
+
+    <delete id="delectMerBusItem">
+        delete from merchant_require_item where merchant_no=#{merchantNo}  and status='2'
+    </delete>
+
+    <select id="listServiceInfoByBpId" resultType="com.esdemo.modules.bean.ServiceInfoBean">
+      SELECT si1.service_id,
+                bpi.bp_id ,
+                CONCAT(IFNULL(si2.service_type, 'S'),si1.service_type) serviceType,
+                si1.fixed_rate,
+		        si1.fixed_quota
+        FROM business_product_info bpi
+        LEFT JOIN service_info si1 ON si1.service_id = bpi.service_id
+        LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+        WHERE bpi.bp_id = #{bpId}
+    </select>
+
+    <delete id="deleteMerRate">
+        delete msq FROM merchant_service_quota msq,merchant_service ms
+        WHERE msq.service_id=ms.service_id
+        AND msq.merchant_no=ms.merchant_no
+        AND ms.bp_id=#{bpId} AND ms.merchant_no=#{merchantNo}
+    </delete>
+
+    <delete id="deleteMerQuota">
+        delete msr FROM merchant_service_rate msr,merchant_service ms
+        WHERE msr.service_id=ms.service_id
+        AND msr.merchant_no=ms.merchant_no
+        AND ms.bp_id=#{bpId}
+        AND ms.merchant_no=#{merchantNo}
+    </delete>
+
+    <update id="updateMerchantService">
+        UPDATE merchant_service
+        SET bp_id = #{newBpId},
+            service_id = #{newServiceId},
+            create_date = CURRENT_TIMESTAMP,
+            STATUS = 1
+        WHERE merchant_no = #{merchantNo}
+        AND   service_id = #{oldServiceId}
+        AND   bp_id = #{oldBpId}
+    </update>
+
+    <select id="getServiceRateByServiceId" resultType="com.esdemo.modules.bean.ServiceRate">
+        select smr.service_id,si.service_name, smr.holidays_mark, smr.card_type,
+        smr.rate_type, smr.single_num_amount, smr.rate, smr.capping,smr.safe_line,
+        smr.ladder1_rate,smr.ladder1_max, smr.ladder2_rate, smr.ladder2_max,
+         smr.ladder3_rate, smr.ladder3_max, smr.ladder4_rate,smr.ladder4_max
+         from service_manage_rate smr
+         join service_info si on si.service_id = smr.service_id
+         where  smr.agent_no=#{one_agent_no}
+         and smr.service_id=#{serviceId}
+    </select>
+
+    <insert id="bacthInsertServiceRate" parameterType="java.util.List">
+        insert INTO merchant_service_rate
+        (
+        service_id,
+        merchant_no,
+        holidays_mark,
+        card_type,
+        rate_type,
+        single_num_amount,
+        rate,
+        capping,
+        safe_line,
+        efficient_date,
+        ladder1_rate,
+        ladder1_max,
+        ladder2_rate,
+        ladder2_max,
+        ladder3_rate,
+        ladder3_max,
+        ladder4_rate,
+        ladder4_max,
+        useable
+        )values
+        <foreach collection="rateList" item="bean" separator="," open="" close="">
+            (
+            #{bean.serviceId},
+            #{merchantNo},
+            #{bean.holidaysMark},
+            #{bean.cardType},
+            #{bean.rateType},
+            #{bean.singleNumAmount},
+            #{bean.rate},
+            #{bean.capping},
+            #{bean.safeLine},
+            CURRENT_DATE,
+            #{bean.ladder1Rate},
+            #{bean.ladder1Max},
+            #{bean.ladder2Rate},
+            #{bean.ladder2Max},
+            #{bean.ladder3Rate},
+            #{bean.ladder3Max},
+            #{bean.ladder4Rate},
+            #{bean.ladder4Max},
+            '1'
+            )
+        </foreach>
+    </insert>
+
+    <select id="getServiceQuotaByServiceId" resultType="com.esdemo.modules.bean.ServiceQuota">
+        select smq.* ,si.service_name from service_manage_quota smq
+        inner join service_info si on si.service_id = smq.service_id
+        where  smq.agent_no=#{one_agent_no} and smq.service_id=#{serviceId}
+    </select>
+
+    <insert id="bacthInsertServiceQuota" parameterType="java.util.List">
+        insert merchant_service_quota
+        (
+        service_id,
+        card_type,
+        holidays_mark,
+        merchant_no,
+        single_day_amount,
+        single_count_amount,
+        single_daycard_amount,
+        single_daycard_count,
+        efficient_date,
+        useable,
+        single_min_amount
+        )values
+        <foreach collection="quotaList" item="item" separator=",">
+            (
+            #{item.serviceId},
+            #{item.cardType},
+            #{item.holidaysMark},
+            #{merchantNo},
+            #{item.singleDayAmount},
+            #{item.singleCountAmount},
+            #{item.singleDaycardAmount},
+            #{item.singleDaycardCount},
+            CURRENT_DATE,
+            '1',
+            #{item.singleMinAmount}
+            )
+        </foreach>
+    </insert>
+
+    <select id="listMerchantWarning" resultType="com.esdemo.modules.bean.MerchantWarningBean">
+        SELECT * FROM merchant_warning_service mws
+        WHERE mws.is_used = 1
+        AND EXISTS(
+            SELECT 1 FROM agent_business_product abp
+            JOIN business_product_define bpd ON bpd.bp_id = abp.bp_id
+            WHERE abp.agent_no = #{agentNo}
+            AND FIND_IN_SET(bpd.team_id, mws.team_id)
+            AND abp.status='1'
+            AND bpd.effective_status = 1
+        )
+    </select>
+    <select id="getMerchantWarning" resultType="com.esdemo.modules.bean.MerchantWarningBean">
+        SELECT * FROM merchant_warning_service mws
+        WHERE mws.is_used = 1
+        AND EXISTS(
+            SELECT 1 FROM agent_business_product abp
+            JOIN business_product_define bpd ON bpd.bp_id = abp.bp_id
+            WHERE abp.agent_no = #{agentNo}
+            AND FIND_IN_SET(bpd.team_id, mws.team_id)
+            AND abp.status='1'
+            AND bpd.effective_status = 1
+        )
+        and mws.id = #{warningId}
+    </select>
+
+    <select id="listMerchantByNos" resultType="com.esdemo.modules.bean.MerchantEsResultBean">
+        SELECT
+            mi.merchant_no,
+            mi.merchant_name,
+            mi.merchant_type,
+            mi.mobilephone mobilePhone,
+            mi.agent_no,
+            ai.agent_name
+        FROM merchant_info mi
+        LEFT JOIN agent_info ai ON ai.agent_no = mi.agent_no
+        where mi.merchant_no in
+        <foreach collection="merchantNos" item="merchantNo" open="(" separator="," close=")">
+            #{merchantNo}
+        </foreach>
+    </select>
+    <select id="selectBpRateByServiceType" resultType="java.math.BigDecimal">
+        SELECT MIN(rate) FROM service_manage_rate smr
+        JOIN business_product_info bpi ON bpi.service_id = smr.service_id
+        JOIN service_info si ON si.service_id = smr.service_id
+        WHERE bpi.bp_id = #{bpId}
+        AND si.service_type = #{serviceType}
+        AND smr.agent_no = #{oneAgentNo}
+    </select>
+    <select id="selectBpsRateByServiceType" resultType="map">
+        SELECT bp_id, MIN(rate) rate FROM service_manage_rate smr
+        JOIN business_product_info bpi ON bpi.service_id = smr.service_id
+        JOIN service_info si ON si.service_id = smr.service_id
+        WHERE bpi.bp_id IN
+        <foreach collection="bpIds" item="bpId" open="(" close=")" separator=",">
+            #{bpId}
+        </foreach>
+        AND si.service_type = #{serviceType}
+        AND smr.agent_no = #{oneAgentNo}
+        GROUP BY bp_id
+    </select>
+</mapper>

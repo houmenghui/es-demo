@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>获取商户下拉框各种值</title>
+</head>
+<body>
+<pre>
+<code>
+{
+  "code": 200,
+  "message": "",
+  "data": {
+    "searchTypes": [
+      {
+        "key": "ALL",
+        "value": "全部",
+        "description": "包含以下所有类别"
+      },
+      {
+        "key": "QUALITY",
+        "value": "优质商户",
+        "description": "本月交易金额>=50000元"
+      },
+      {
+        "key": "ACTIVE",
+        "value": "活跃商户",
+        "description": "近30天交易笔数>=2笔且交易金额>=10元"
+      },
+      {
+        "key": "UNCERTIFIED",
+        "value": "未认证商户",
+        "description": "身份未认证的商户"
+      },
+      {
+        "key": "SLEEP",
+        "value": "休眠商户",
+        "description": "入网>=60天且连续>60天无交易"
+      }
+    ],
+    "merchantTypes": [
+      {
+        "key": "ALL",
+        "value": "全部数据",
+        "description": "包含直营及下级所有的数据"
+      },
+      {
+        "key": "OFFICAL",
+        "value": "直营数据",
+        "description": "仅包含直营推广的数据"
+      },
+      {
+        "key": "CHILDREN",
+        "value": "下级数据",
+        "description": "仅包含所有下级的数据"
+      }
+    ],
+    "recommendedSource": [
+      {
+        "key": "",
+        "value": "全部",
+        "description": null
+      },
+      {
+        "key": "0",
+        "value": "正常注册",
+        "description": null
+      },
+      {
+        "key": "1",
+        "value": "超级推",
+        "description": null
+      },
+      {
+        "key": "2",
+        "value": "代理商分享",
+        "description": null
+      }
+    ],
+    "hlfActive": [
+      {
+        "key": "",
+        "value": "全部",
+        "description": null
+      },
+      {
+        "key": "0",
+        "value": "未激活",
+        "description": null
+      },
+      {
+        "key": "1",
+        "value": "已激活",
+        "description": null
+      }
+    ],
+    "activityMerchantTypes": [
+      {
+        "key": "ALL",
+        "value": "全部活动商户",
+        "description": "包含直营及下级所有的数据"
+      },
+      {
+        "key": "OFFICAL",
+        "value": "直营活动商户",
+        "description": "仅包含直营推广的数据"
+      },
+      {
+        "key": "CHILDREN",
+        "value": "下级活动商户",
+        "description": "仅包含所有下级的数据"
+      }
+    ],
+    "sortTypes": [
+      {
+        "key": "DEFAULT_ORDER",
+        "value": "默认排序",
+        "description": null
+      },
+      {
+        "key": "CUR_MONTH_TRANS_DESC",
+        "value": "本月交易量从高到低",
+        "description": null
+      },
+      {
+        "key": "CUR_MONTH_TRANS_ASC",
+        "value": "本月交易量从低到高",
+        "description": null
+      },
+      {
+        "key": "LAST_MONTH_TRANS_DESC",
+        "value": "上月交易量从高到低",
+        "description": null
+      },
+      {
+        "key": "LAST_MONTH_TRANS_ASC",
+        "value": "上月交易量从低到高",
+        "description": null
+      },
+      {
+        "key": "ALL_TRANS_DESC",
+        "value": "累计交易量从高到低",
+        "description": null
+      },
+      {
+        "key": "ALL_TRANS_ASC",
+        "value": "累计交易量从低到高",
+        "description": null
+      }
+    ],
+    "riskStatus": [
+      {
+        "key": "",
+        "value": "全部",
+        "description": null
+      },
+      {
+        "key": "1",
+        "value": "正常",
+        "description": null
+      },
+      {
+        "key": "2",
+        "value": "只进不出",
+        "description": null
+      },
+      {
+        "key": "3",
+        "value": "不进不出",
+        "description": null
+      }
+    ],
+    "merchantSearchEcho": [
+      {
+        "key": "ALL",
+        "value": {
+          "agentNo": null,
+          "agentNode": null,
+          "theOpenBpId": null,
+          "teamId": null,
+          "teamEntryId": null,
+          "mobilePhone": null,
+          "startTransTime": null,
+          "endTransTime": null,
+          "minTransMoney": null,
+          "maxTransMoney": null,
+          "minOrderNum": null,
+          "maxOrderNum": null,
+          "province": null,
+          "city": null,
+          "district": null,
+          "startCreateTime": null,
+          "endCreateTime": null,
+          "merchantStatus": null,
+          "theUnOpenBpId": null,
+          "queryScope": "ALL",
+          "searchType": "ALL",
+          "sortType": "DEFAULT_ORDER",
+          "warningId": null,
+          "hlfActive": null,
+          "merchantName": null,
+          "merchantNo": null,
+          "recommendedSource": null,
+          "riskStatus": null,
+          "specialMerFlag": null
+        },
+        "description": "包含以下所有类别"
+      },
+      {
+        "key": "QUALITY",
+        "value": {
+          "agentNo": null,
+          "agentNode": null,
+          "theOpenBpId": null,
+          "teamId": null,
+          "teamEntryId": null,
+          "mobilePhone": null,
+          "startTransTime": "2020-06-01 00:00:00",
+          "endTransTime": "2020-06-10 09:21:11",
+          "minTransMoney": null,
+          "maxTransMoney": null,
+          "minOrderNum": null,
+          "maxOrderNum": null,
+          "province": null,
+          "city": null,
+          "district": null,
+          "startCreateTime": null,
+          "endCreateTime": null,
+          "merchantStatus": null,
+          "theUnOpenBpId": null,
+          "queryScope": "ALL",
+          "searchType": "QUALITY",
+          "sortType": "DEFAULT_ORDER",
+          "warningId": null,
+          "hlfActive": null,
+          "merchantName": null,
+          "merchantNo": null,
+          "recommendedSource": null,
+          "riskStatus": null,
+          "specialMerFlag": null
+        },
+        "description": "本月交易金额>=50000元"
+      },
+      {
+        "key": "ACTIVE",
+        "value": {
+          "agentNo": null,
+          "agentNode": null,
+          "theOpenBpId": null,
+          "teamId": null,
+          "teamEntryId": null,
+          "mobilePhone": null,
+          "startTransTime": "2020-05-11 00:00:00",
+          "endTransTime": null,
+          "minTransMoney": "10",
+          "maxTransMoney": null,
+          "minOrderNum": "2",
+          "maxOrderNum": null,
+          "province": null,
+          "city": null,
+          "district": null,
+          "startCreateTime": null,
+          "endCreateTime": null,
+          "merchantStatus": null,
+          "theUnOpenBpId": null,
+          "queryScope": "ALL",
+          "searchType": "ACTIVE",
+          "sortType": "DEFAULT_ORDER",
+          "warningId": null,
+          "hlfActive": null,
+          "merchantName": null,
+          "merchantNo": null,
+          "recommendedSource": null,
+          "riskStatus": null,
+          "specialMerFlag": null
+        },
+        "description": "近30天交易笔数>=2笔且交易金额>=10元"
+      },
+      {
+        "key": "UNCERTIFIED",
+        "value": {
+          "agentNo": null,
+          "agentNode": null,
+          "theOpenBpId": null,
+          "teamId": null,
+          "teamEntryId": null,
+          "mobilePhone": null,
+          "startTransTime": null,
+          "endTransTime": null,
+          "minTransMoney": null,
+          "maxTransMoney": null,
+          "minOrderNum": null,
+          "maxOrderNum": null,
+          "province": null,
+          "city": null,
+          "district": null,
+          "startCreateTime": null,
+          "endCreateTime": null,
+          "merchantStatus": null,
+          "theUnOpenBpId": null,
+          "queryScope": "ALL",
+          "searchType": "UNCERTIFIED",
+          "sortType": "DEFAULT_ORDER",
+          "warningId": null,
+          "hlfActive": null,
+          "merchantName": null,
+          "merchantNo": null,
+          "recommendedSource": null,
+          "riskStatus": null,
+          "specialMerFlag": null
+        },
+        "description": "身份未认证的商户"
+      },
+      {
+        "key": "SLEEP",
+        "value": {
+          "agentNo": null,
+          "agentNode": null,
+          "theOpenBpId": null,
+          "teamId": null,
+          "teamEntryId": null,
+          "mobilePhone": null,
+          "startTransTime": "2020-04-11 00:00:00",
+          "endTransTime": null,
+          "minTransMoney": null,
+          "maxTransMoney": null,
+          "minOrderNum": null,
+          "maxOrderNum": "0",
+          "province": null,
+          "city": null,
+          "district": null,
+          "startCreateTime": null,
+          "endCreateTime": "2020-04-11 00:00:00",
+          "merchantStatus": null,
+          "theUnOpenBpId": null,
+          "queryScope": "ALL",
+          "searchType": "SLEEP",
+          "sortType": "DEFAULT_ORDER",
+          "warningId": null,
+          "hlfActive": null,
+          "merchantName": null,
+          "merchantNo": null,
+          "recommendedSource": null,
+          "riskStatus": null,
+          "specialMerFlag": null
+        },
+        "description": "入网>=60天且连续>60天无交易"
+      }
+    ],
+    "mbpStatus": [
+      {
+        "key": "",
+        "value": "全部",
+        "description": null
+      },
+      {
+        "key": "1",
+        "value": "待一审",
+        "description": null
+      },
+      {
+        "key": "2",
+        "value": "待平台审核",
+        "description": null
+      },
+      {
+        "key": "3",
+        "value": "审核失败",
+        "description": null
+      },
+      {
+        "key": "4",
+        "value": "正常",
+        "description": null
+      },
+      {
+        "key": "5",
+        "value": "已转自动审件",
+        "description": null
+      },
+      {
+        "key": "0",
+        "value": "关闭",
+        "description": null
+      }
+    ]
+  },
+  "count": 0,
+  "success": true
+}
+</code>
+</pre>
+
+</body>
+</html>

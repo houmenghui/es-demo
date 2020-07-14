@@ -1,0 +1,1 @@
+"D:\Program Files\logstash-6.2.2\bin\logstash" -f H:\workCode\agentApi2\es-mysql\2.nposp2.conf

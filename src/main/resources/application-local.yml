@@ -1,0 +1,30 @@
+spring:
+    datasource:
+        write:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: jdbc:mysql://127.0.0.1:3306/test-nposp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&tinyInt1isBit=false&useAffectedRows=true
+            username: root
+            password: 123456
+        read:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: jdbc:mysql://127.0.0.1:3306/test-nposp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&tinyInt1isBit=false&useAffectedRows=true
+            username: root
+            password: 123456
+        bill:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: jdbc:mysql://127.0.0.1/test-nposp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=true&tinyInt1isBit=false&useSSL=false&useAffectedRows=true
+            username: root
+            password: 123456
+    redis:
+        host: 192.168.1.145
+        port: 6689
+        password: EEEPAYcomadmincn
+    data:
+        elasticsearch:
+            cluster-name: elasticsearch
+            cluster-nodes: 127.0.0.1:9300
+            repositories:
+                enabled: true
+
+# 是否显示swagger接口文档
+show-api-doc: true

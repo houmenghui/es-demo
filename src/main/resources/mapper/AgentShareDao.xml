@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.AgentShareDao">
+
+    <select id="findAgentNo" resultType="string">
+        select agent_no from agent_share_rule where id = #{shareId}
+    </select>
+
+    <select id="selectAgentShare" resultType="com.esdemo.modules.bean.ProfitUpdateRecord">
+        select * from profit_update_record where share_id = #{shareId} and auther = #{agentNo} order by update_date desc
+    </select>
+
+    <select id="selectByShareId" resultType="com.esdemo.modules.bean.AgentShareRuleTask">
+        select * from agent_share_rule where id = #{shareId}
+    </select>
+
+    <select id="selectAgentShareRule" resultType="map">
+        select * from agent_share_rule where agent_no = #{agentNo} and service_id = #{serviceId} and card_type= #{cardType}
+    </select>
+
+    <select id="getAgentShareList" resultType="com.esdemo.modules.bean.AgentShareRule">
+        select * from agent_share_rule ar
+        left join service_info sr on sr.service_id=ar.service_id
+        where agent_no=#{agentNo} and sr.effective_status = 1
+    </select>
+
+    <insert id="insertShareUpdateRecord" parameterType="com.esdemo.modules.bean.ProfitUpdateRecord" >
+        insert into profit_update_record (share_id,cost_history,cost,share_profit_percent_history,
+        share_profit_percent,efficient_date,effective_status,update_date,auther,share_task_id)
+        values (#{record.shareId},#{record.costHistory},#{record.cost},#{record.shareProfitPercentHistory},
+        #{record.shareProfitPercent},#{record.efficientDate},#{record.effectiveStatus},now(),#{record.auther},#{record.shareTaskId})
+    </insert>
+
+    <insert id="insertAgentShareListTask" useGeneratedKeys="true" keyProperty="agent.id" parameterType="com.esdemo.modules.bean.AgentShareRuleTask">
+        insert into agent_share_rule_task(share_id,efficient_date,effective_status,profit_type,per_fix_income,
+        per_fix_inrate,safe_line,capping,share_profit_percent,
+        ladder,cost_rate_type,per_fix_cost,cost_rate,cost_capping,cost_safeline,ladder1_rate,ladder1_max,
+        ladder2_rate,ladder2_max,ladder3_rate,ladder3_max,ladder4_rate,ladder4_max,check_status)
+        values(#{agent.shareId},#{agent.efficientDate},0,#{agent.profitType},#{agent.perFixIncome},#{agent.perFixInrate},
+        #{agent.safeLine},#{agent.capping},#{agent.shareProfitPercent},#{agent.ladder},#{agent.costRateType},
+        #{agent.perFixCost},#{agent.costRate},#{agent.costCapping},#{agent.costSafeline},
+        #{agent.ladder1Rate},#{agent.ladder1Max},#{agent.ladder2Rate},#{agent.ladder2Max},#{agent.ladder3Rate},
+        #{agent.ladder3Max},#{agent.ladder4Rate},#{agent.ladder4Max},#{agent.checkStatus})
+    </insert>
+
+
+    <select id="getSameTypeParentAgentShare" resultType="com.esdemo.modules.bean.AgentShareRule">
+        SELECT
+            asr1.*,si.service_name,bpd.bp_name
+        FROM agent_share_rule asr1
+        LEFT JOIN service_info si on asr1.service_id=si.service_id
+	    LEFT JOIN business_product_info bpi ON bpi.service_id = si.service_id
+        LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+        JOIN agent_share_rule asr2 ON asr2.service_id = asr1.service_id
+            AND asr2.card_type = asr1.card_type
+            AND asr2.holidays_mark = asr1.holidays_mark
+            AND asr1.agent_no = (SELECT parent_id FROM agent_info ai WHERE ai.agent_no = asr2.agent_no)
+        WHERE   asr2.id =  #{shareId}
+        limit 1
+    </select>
+
+    <select id="queryMemberBpId" resultType="long">
+        SELECT bpg2.bp_id
+        FROM agent_share_rule asr
+        LEFT JOIN business_product_info b ON b.service_id = asr.service_id
+        LEFT JOIN business_product_group bpg ON b.bp_id = bpg.bp_id
+        JOIN business_product_group bpg2 ON bpg2.group_no = bpg.group_no
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = bpg2.bp_id
+        WHERE asr.id = #{shareId}
+        AND bpd.allow_individual_apply = 0
+        AND bpd.effective_status = 1
+    </select>
+
+    <select id="getMemberShareId" resultType="long">
+        SELECT main.id FROM
+        (
+            SELECT
+            CONCAT(si.service_type,IFNULL(si2.service_type,'')) AS service_type,asr.*
+            FROM business_product_info bpi
+            LEFT JOIN agent_share_rule asr ON bpi.service_id = asr.service_id
+            LEFT JOIN service_info si ON asr.service_id = si.service_id
+            LEFT JOIN service_info si2 ON si2.link_service = si.service_id
+            WHERE bpi.bp_id=#{memberBpId}
+            and si.effective_status = 1
+        )main
+        JOIN
+        (
+            SELECT CONCAT(si.service_type,IFNULL(si2.service_type,'')) AS service_type,asr.*
+             FROM agent_share_rule asr
+            LEFT JOIN business_product_info bpi ON bpi.service_id = asr.service_id
+            LEFT JOIN service_info si ON asr.service_id = si.service_id
+            LEFT JOIN service_info si2 ON si2.link_service = si.service_id
+            WHERE asr.id = #{leaderShareId}
+        )sub ON main.agent_no = sub.agent_no
+            AND main.card_type = sub.card_type
+            AND main.holidays_mark = sub.holidays_mark
+            AND main.service_type = sub.service_type
+    </select>
+
+    <select id="getSameTypeRootAgentMinServiceRate" resultType="map">
+        SELECT IFNULL(smr.rate,0) as rate,IFNULL(smr.single_num_amount,0) as single_num_amount,smr.agent_no,smr.card_type,temp.isTx,temp.bp_name,temp.service_name
+        FROM service_manage_rate smr
+            JOIN (
+                     SELECT v2.service_id,v2.isTx,v2.bp_name,v2.service_name
+                     FROM (
+
+                              SELECT
+                                  si1.service_id,
+                                  si1.service_name,
+                                  CONCAT(si1.service_type, '-', IFNULL(si2.service_type, '')) AS service_type,
+                                  bpi.bp_id,
+                                  IFNULL(bpg.group_no, CONCAT('G',si1.service_id)) AS group_no,
+                                  bpd.bp_name,
+                                  IF(si2.service_type IS NULL, 0, 1) AS isTx
+                              FROM service_info si1
+                                  LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+                                  LEFT JOIN business_product_info bpi ON bpi.service_id = si1.service_id
+                                  LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+                                  LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+                              WHERE si1.effective_status = 1
+                                    AND bpd.effective_status = 1
+
+                          ) v1
+                         left JOIN (
+                                       SELECT
+                                           si1.service_id,
+                                           si1.service_name,
+                                           CONCAT(si1.service_type, '-', IFNULL(si2.service_type, '')) AS service_type,
+                                           bpi.bp_id,
+                                           IFNULL(bpg.group_no, CONCAT('G',si1.service_id)) AS group_no,
+                                           bpd.bp_name,
+                                           IF(si2.service_type IS NULL, 0, 1) AS isTx
+                                       FROM service_info si1
+                                           LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+                                           LEFT JOIN business_product_info bpi ON bpi.service_id = si1.service_id
+                                           LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+                                           LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+                                       WHERE EXISTS (
+                                               SELECT 1 FROM agent_business_product
+                                               WHERE status=1
+                                                     AND bp_id = bpi.bp_id
+                                                     AND agent_no = #{agentNo}
+                                           and si1.effective_status = 1
+                                           and bpd.effective_status = 1
+                                       )
+                                   ) v2 ON v1.service_type = v2.service_type AND v1.group_no = v2.group_no
+                     WHERE v1.service_id = #{rule.serviceId}
+                 )temp ON smr.service_id = temp.service_id
+                          AND smr.agent_no = #{oneLevelId}
+                          AND smr.card_type = #{rule.cardType}
+                          AND smr.holidays_mark =  #{rule.holidaysMark}
+        ORDER BY IF(temp.isTx = 1,smr.single_num_amount, smr.rate )
+        LIMIT 1
+    </select>
+
+    <select id="getSameTypeRootAgentMaxServiceRate" resultType="map">
+        SELECT IFNULL(smr.rate,0) as rate,IFNULL(smr.single_num_amount,0) as single_num_amount,smr.agent_no,smr.card_type,temp.isTx,temp.bp_name,temp.service_name
+        FROM service_manage_rate smr
+        JOIN (
+        SELECT v2.service_id,v2.isTx,v2.bp_name,v2.service_name
+        FROM (
+
+        SELECT
+        si1.service_id,
+        si1.service_name,
+        CONCAT(si1.service_type, '-', IFNULL(si2.service_type, '')) AS service_type,
+        bpi.bp_id,
+        IFNULL(bpg.group_no, CONCAT('G',si1.service_id)) AS group_no,
+        bpd.bp_name,
+        IF(si2.service_type IS NULL, 0, 1) AS isTx
+        FROM service_info si1
+        LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+        LEFT JOIN business_product_info bpi ON bpi.service_id = si1.service_id
+        LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+        WHERE si1.effective_status = 1
+        AND bpd.effective_status = 1
+
+        ) v1
+        left JOIN (
+        SELECT
+        si1.service_id,
+        si1.service_name,
+        CONCAT(si1.service_type, '-', IFNULL(si2.service_type, '')) AS service_type,
+        bpi.bp_id,
+        IFNULL(bpg.group_no, CONCAT('G',si1.service_id)) AS group_no,
+        bpd.bp_name,
+        IF(si2.service_type IS NULL, 0, 1) AS isTx
+        FROM service_info si1
+        LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+        LEFT JOIN business_product_info bpi ON bpi.service_id = si1.service_id
+        LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+        WHERE EXISTS (
+        SELECT 1 FROM agent_business_product
+        WHERE status=1
+        AND bp_id = bpi.bp_id
+        AND agent_no = #{agentNo}
+        and si1.effective_status = 1
+        and bpd.effective_status = 1
+        )
+        ) v2 ON v1.service_type = v2.service_type AND v1.group_no = v2.group_no
+        WHERE v1.service_id = #{rule.serviceId}
+        )temp ON smr.service_id = temp.service_id
+        AND smr.agent_no = #{oneLevelId}
+        AND smr.card_type = #{rule.cardType}
+        AND smr.holidays_mark =  #{rule.holidaysMark}
+        ORDER BY IF(temp.isTx = 1,smr.single_num_amount, smr.rate ) desc
+        LIMIT 1
+    </select>
+
+</mapper>

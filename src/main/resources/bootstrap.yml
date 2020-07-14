@@ -1,0 +1,5 @@
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+    config:
+        additional-location: file:/opt/conf/esdemo_constants.properties

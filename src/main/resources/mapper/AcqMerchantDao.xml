@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.AcqMerchantDao">
+    <select id="queryAcqMerByGeneralMerNo" resultType="map">
+        SELECT * FROM acq_merchant WHERE merchant_no = #{merchantNo}
+        <if test="acqMerchantNo != null and acqMerchantNo != ''">
+            AND acq_merchant_no = #{acqMerchantNo}
+        </if>
+        ORDER BY id DESC LIMIT 1
+    </select>
+
+    <select id="queryLatestAcqMerchantInfo" resultType="map">
+        SELECT * FROM acq_merchant_info WHERE general_merchant_no = #{merchantNo} ORDER BY id DESC LIMIT 1
+    </select>
+
+    <select id="getMerItemByNoAndMriId" resultType="java.lang.String">
+        SELECT content FROM merchant_require_item WHERE merchant_no = #{merchantNo} and mri_id = #{mriId}
+    </select>
+
+    <select id="getMbpList" resultType="map">
+        SELECT * FROM merchant_business_product WHERE merchant_no = #{merchantNo}
+    </select>
+
+    <select id="findMerAccountNo" resultType="map">
+        SELECT * FROM merchant_card_info WHERE merchant_no = #{merchantNo} and account_no = #{accountNo} and card_type = '1' and def_settle_card = '1'
+    </select>
+
+    <delete id="deleteAcqMerFile">
+        DELETE FROM acq_merchant_file_info WHERE file_type = #{fileType} and acq_into_no = #{acqIntoNo}
+    </delete>
+
+    <select id="censusTerminalCount" resultType="long">
+        SELECT COUNT(ti.id) FROM terminal_info ti
+        <if test="isActive">
+            JOIN activity_detail ad ON ad.active_sn = ti.SN
+        </if>
+        WHERE ti.PSAM_NO = ti.SN
+        <if test="isActive">
+            AND ad.status >= '2'
+        </if>
+        <if test="!isActive">
+            <if test="queryScopeCode == 'ALL'">
+                AND ti.agent_node LIKE CONCAT(#{agentNode},'%')
+            </if>
+            <if test="queryScopeCode == 'CHILDREN'">
+                AND ti.agent_node LIKE CONCAT(#{agentNode},'_%')
+            </if>
+            <if test="queryScopeCode == 'OFFICAL'">
+                AND ti.agent_node = #{agentNode}
+            </if>
+        </if>
+
+        <if test="isActive">
+            <if test="queryScopeCode == 'ALL'">
+                AND ad.agent_node LIKE CONCAT(#{agentNode},'%')
+            </if>
+            <if test="queryScopeCode == 'CHILDREN'">
+                AND ad.agent_node LIKE CONCAT(#{agentNode},'_%')
+            </if>
+            <if test="queryScopeCode == 'OFFICAL'">
+                AND ad.agent_node = #{agentNode}
+            </if>
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.TransOrderDao">
+
+    <!-- 根据查询条件查询订单对象 -->
+    <select id="queryTransOrderByParams" resultType="map">
+        SELECT
+        <include refid="commonSelect"/>
+        FROM
+        <include refid="commonFrom"/>
+        <include refid="commonWhere"/>
+    </select>
+
+    <!-- 根据订单号动态查询分润-->
+    <select id="queryAgentProfitByOrderNo" resultType="map">
+        SELECT
+        <foreach item="field" collection="selectProfitFields" separator="," open="" close="">
+            IFNULL(${field}, 0) #{field}
+        </foreach>
+        FROM collective_trans_order WHERE order_no = #{orderNo}
+    </select>
+
+    <select id="queryCardInfoByAccountNo" resultType="map">
+        SELECT * FROM pos_card_bin c
+        WHERE c.card_length = LENGTH(#{accountNo}) AND c.verify_code = LEFT(#{accountNo}, c.verify_length)
+    </select>
+
+    <!-- 通用查询字段，注意表的别名-->
+    <sql id="commonSelect">
+        cto.order_no,
+        cto.merchant_no,
+        cto.trans_amount,
+        cto.pay_method,
+        cto.trans_status,
+        cto.trans_type,
+        cto.mobile_no mobilephone,
+        cto.card_type,
+        cto.account_no,
+        cto.merchant_rate,
+        cto.merchant_fee,
+        cto.device_sn,
+        DATE_FORMAT(cto.create_time, '%Y-%m-%d %H:%i:%S') create_time,
+        DATE_FORMAT(cto.trans_time, '%Y-%m-%d %H:%i:%S') trans_time,
+        DATE_FORMAT(cto.last_update_time, '%Y-%m-%d %H:%i:%S') last_update_time,
+        cto.business_product_id bp_id,
+        IFNULL(bpd.bp_name, cto.business_product_id) bp_name,
+        mi.parent_node agent_node,
+        mi.team_id,
+        mi.merchant_name,
+        mi.agent_no,
+        ai.agent_name,
+        ai.agent_level,
+        IFNULL(si.service_id, '') service_id,
+        IFNULL(si.service_name, '') service_name,
+        IFNULL(hp.type_name, '') hp_type_name,
+        IFNULL(hp.version_nu, '') version_nu
+    </sql>
+    <!-- 通用关联查询表，注意表的别名-->
+    <sql id="commonFrom">
+        collective_trans_order cto
+        JOIN merchant_info mi ON mi.merchant_no = cto.merchant_no
+        JOIN agent_info ai ON mi.agent_no = ai.agent_no
+        LEFT JOIN service_info si ON si.service_id = cto.service_id
+        LEFT JOIN business_product_define bpd ON cto.business_product_id = bpd.bp_id
+        LEFT JOIN terminal_info ti ON ti.sn = cto.device_sn
+        LEFT JOIN hardware_product hp ON hp.hp_id = ti.type
+    </sql>
+    <!-- 通用查询条件，注意表的别名-->
+    <sql id="commonWhere">
+        WHERE 1 = 1
+        <if test="params.orderNo != null and params.orderNo != ''">
+            AND cto.order_no = #{params.orderNo}
+        </if>
+    </sql>
+</mapper>

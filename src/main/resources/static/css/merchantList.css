@@ -1,0 +1,152 @@
+html{
+    font-size: 13.34vw;
+    background: #f6f6f6;
+}
+body,ul,li,h3,p{
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+.main{
+    background: #fff;
+    margin-top: 2.67vw;
+    padding: 0 4vw;
+    overflow: hidden;
+}
+.main li{
+    overflow: hidden;
+    padding: 4vw 0;
+    height: 14.67vw;
+    display: flex;
+    position: relative;
+}
+.main li:after{
+    position: absolute;
+    width: 100%;
+    content: '';
+    height: 1px;
+    bottom:0;
+    background: #EEEEEE;
+    transform: scaleY(0.5);
+}
+.left{
+    width: 65vw;
+}
+.left h3{
+    font-size: .30rem;
+    color: #333333;
+    line-height: 8vw;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.left p{
+    font-size: .28rem;
+    color: #9197A6;
+    line-height: 6.6vw;
+    overflow: hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+}
+.right{
+    width: 25vw;
+    text-align: right;
+    overflow: hidden;
+}
+.right span{
+    font-size: .34rem;
+    line-height: 8.4vw;
+    display: block;
+    text-align: right;
+}
+.right span em{
+    font-style: normal;
+    font-size: .34rem;
+    padding-left: 1vw;
+}
+.right span.up{color:#D85554}
+.right span.down{color: #6DB663}
+.right span.up i{
+    width: 3vw;
+    background: url("../img/data_up@2x.png") no-repeat;
+    background-size: cover;
+    display: inline-block;
+    height: 3vw;
+    margin-top: 2.7vw;
+
+}
+.right span.down i{
+    width: 3vw;
+    background: url("../img/data_down@2x.png") no-repeat;
+    background-size: cover;
+    display: inline-block;
+    height: 3vw;
+    margin-top: 2.7vw;
+
+}
+.right p{
+    font-size: .26rem;
+    color: #9197A6;
+    line-height: 6.2vw;
+}
+.loading_tips{
+    text-align: center;
+    color: #BBBBBB;
+    font-size: .24rem;
+    line-height: .6rem;
+    padding-bottom: .5rem;
+}
+.backtop{
+    position: fixed;
+    width: 48px;
+    height: 48px;
+    right: 10px;
+    bottom: 30px;
+    background: #fff;
+    border-radius: 100%;
+    display: none;
+}
+.backtop img{
+    display: block;
+    width: 100%;
+}
+a{
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    text-decoration: none;
+}
+.empty{
+    width: 36%;
+    margin: 50px auto 0;
+}
+.empty img{
+    display: block;
+    width: 100%;
+}
+.empty p{
+    text-align: center;
+    color: #BBBBBB;
+    font-size: .24rem;
+    line-height: .6rem;
+    padding-bottom: .5rem;
+}
+loading{
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    background: rgba(256,256,256,.9);
+}
+.loading img{
+    width: 60px;
+    height: 60px;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    margin: -30px 0 0 -30px;
+}

@@ -1,0 +1,39 @@
+spring:
+    datasource:
+        write:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: jdbc:mysql://192.168.1.183:5567/kf_kq_nposp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&tinyInt1isBit=false&useSSL=false&useAffectedRows=true
+            username: kf_wr
+            password: kf@#!123
+        read:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: jdbc:mysql://192.168.1.183:5567/kf_kq_nposp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=true&tinyInt1isBit=false&useSSL=false&useAffectedRows=true
+            username: kf_read
+            password: kf_read123456
+        bill:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: jdbc:mysql://192.168.1.183:5567/kf_kq_nposp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=true&tinyInt1isBit=false&useSSL=false&useAffectedRows=true
+            username: kf_wr
+            password: kf@#!123
+    redis:
+        host: 192.168.1.145
+        port: 6689
+        password: EEEPAYcomadmincn
+        timeout: 1000
+        jedis:
+            pool:
+                max-idle: 5
+                min-idle: 0
+                max-active: 8
+                max-wait: -1
+
+    data:
+        elasticsearch:
+            cluster-name: elasticsearch
+            #cluster-nodes: 192.168.1.145:9300,192.168.1.147:9300,192.168.4.200:9300
+            cluster-nodes: 192.168.1.147:9300
+            repositories:
+                enabled: true
+
+# 是否显示swagger接口文档
+show-api-doc: true

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	 ======================================================================
+     flowmoney builder 4 product
+     ======================================================================
+-->
+
+<project name="agentweb2" default="pack">
+    <property name="tarForAgentApi2" value="./target/tarForAgentApi2"/>
+    <property name="classes" value="./target"/>
+    <property name="appName" value="agentApi2"/>
+    <property name="source" value="1.8"/>
+    <property name="target" value="1.8"/>
+    <property name="app.dir" value="."/>
+
+    <target name="init">
+        <tstamp>
+            <format property="TODAY" pattern="yyyyMMdd" locale="cn"/>
+        </tstamp>
+        <delete dir="${tarForAgentApi2}"/>
+        <mkdir dir="${tarForAgentApi2}"/>
+        <echo>${appName} ${TODAY}</echo>
+    </target>
+
+    <target name="packStatic" depends="init">
+        <zip destfile="${tarForAgentApi2}/${appName}-${TODAY}.zip">
+            <zipfileset dir="${classes}">
+
+                <include name="classes/com/eeepay/modules/dao/ActivityDataDao*.class"/>
+                <include name="classes/com/eeepay/modules/service/impl/DeductionAmountQueryServiceImpl*.class"/>
+                <include name="classes/com/eeepay/modules/service/impl/FullRewardAmountQueryServiceImpl*.class"/>
+                <include name="classes/com/eeepay/modules/service/impl/NewDeductionAmountQueryServiceImpl*.class"/>
+                <include name="classes/com/eeepay/modules/service/impl/NewMerchantRewardAmountQueryServiceImpl*.class"/>
+                <include name="classes/com/eeepay/modules/service/impl/NewRewardMerCountQueryServiceImpl*.class"/>
+
+
+<!--                &lt;!&ndash;hmh 活动相关&ndash;&gt;-->
+<!--                <include name="classes/com/eeepay/modules/bean/ActivityAndDataQueryBean*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/bean/ActivityData*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/bean/ActivityDataDetail*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/dao/ActivityDataDao*.class"/>-->
+<!--                <include name="classes/com/eeepay/frame/enums/ActivityDataEnum*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/DeductionAmountQueryServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/FullRewardAmountQueryServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/NewDeductionAmountQueryServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/NewMerchantRewardAmountQueryServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/NewRewardMerCountQueryServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/ActivityDataServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/ActivityDataQueryService*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/ActivityDataService*.class"/>-->
+<!--                <include name="classes/com/eeepay/frame/utils/swagger/ActivityDataCountSwaggerNotes*.class"/>-->
+<!--                <include name="classes/static/doc/activityData/activity_data_count_detail_query.html"/>-->
+<!--                <include name="classes/static/doc/activityData/activity_data_count_query.html"/>-->
+<!--                <include name="classes/static/doc/activityData/activity_data_type_query.html"/>-->
+
+<!--                &lt;!&ndash; lvsw 商户查询,详情相关 &ndash;&gt;-->
+<!--            	<include name="classes/com/eeepay/modules/controller/MerchantController*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/utils/MerchantSearchUtils*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/service/impl/MerchantEsServiceImpl*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/controller/MerchantInfoController*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/utils/MerchantSearchUtils*.class"/>-->
+<!--            	<include name="classes/com/eeepay/frame/utils/swagger/SwaggerNotes*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/bean/MerchantDetailBean*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/utils/MerchantSearchUtils*.class"/>-->
+<!--            	<include name="classes/com/eeepay/modules/bean/MerchantSearchBean*.class"/>-->
+<!--                <include name="classes/com/eeepay/frame/interceptor/ClientSignValidateInterceptor*.class"/>-->
+<!--            	<include name="classes/static/doc/merchant/query_merchant_params.html"/>-->
+<!--            	<include name="classes/static/doc/merchant/get_merchant_details.html"/>-->
+
+<!--                &lt;!&ndash; lks 机具,商户进件相关文件 &ndash;&gt;-->
+<!--                <include name="classes/com/eeepay/frame/utils/swagger/SwaggerNoteLmc*.class"/>-->
+<!--                <include name="classes/com/eeepay/frame/utils/swagger/SwaggerNotes*.class"/>-->
+<!--                <include name="classes/com/eeepay/frame/utils/ClientInterface*.class"/>-->
+<!--                <include name="classes/com/eeepay/frame/utils/external/CoreApiEnum*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/bean/PublicDataVo*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/controller/PublicDataController*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/controller/MachineManageController*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/dao/FunctionManageDao*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/dao/MachineManageDao*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/dao/MerchantInfoDao*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/dao/AgentLowerLevelDao*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/FunctionManageService*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/MachineManageService*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/MerchantInfoService*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/FunctionManageServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/MachineManageServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/MerchantInfoServiceImpl*.class"/>-->
+<!--                <include name="classes/com/eeepay/modules/service/impl/AgentLowerLevelServiceImpl*.class"/>-->
+<!--                <include name="classes/mapper/MerchantInfoDao.xml"/>-->
+
+            </zipfileset>
+        </zip>
+    </target>
+
+    <target name="clean">
+        <delete dir="${tarForAgentApi2}"/>
+        <mkdir dir="${tarForAgentApi2}"/>
+    </target>
+
+    <target name="pack" depends="packStatic"/>
+
+    <target name="all" depends="clean, packStatic"/>
+</project>

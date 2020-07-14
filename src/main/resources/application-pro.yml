@@ -1,0 +1,41 @@
+
+spring:
+    datasource:
+        write:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: ${nposp.write.url}
+            username: ${nposp.write.username}
+            password: ${nposp.write.password}
+        read:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: ${nposp.read.url}
+            username: ${nposp.read.username}
+            password: ${nposp.read.password}
+        bill:
+            driver-class-name: com.mysql.jdbc.Driver
+            url: ${bill.url}
+            username: ${bill.username}
+            password: ${bill.password}
+    redis:
+        host: ${redis.host}
+        port: ${redis.port}
+        password: ${redis.password}
+        timeout: 1000
+        jedis:
+            pool:
+                max-idle: 5
+                min-idle: 0
+                max-active: 8
+                max-wait: -1
+
+    data:
+        elasticsearch:
+            cluster-name: ${elasticsearch.cluster-name}
+            cluster-nodes: ${elasticsearch.cluster-nodes}
+            repositories:
+                enabled: true
+
+server:
+    port: ${agentApi.port:8090}
+
+

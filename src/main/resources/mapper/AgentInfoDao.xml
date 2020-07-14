@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.AgentInfoDao">
+
+    <select id="getSameTypeParentAgentShare" resultType="com.esdemo.modules.bean.AgentShareRule">
+        SELECT asr.* FROM agent_share_rule asr
+        WHERE EXISTS (
+            SELECT 1 FROM agent_info ai
+            WHERE ai.agent_no = #{childrenRule.agentId}
+            AND asr.agent_no = ai.parent_id
+        )
+        AND asr.service_id = #{childrenRule.serviceId}
+        AND asr.card_type = #{childrenRule.cardType}
+        AND asr.holidays_mark = #{childrenRule.holidaysMark}
+    </select>
+
+    <select id="getSameTypeRootAgentMinServiceRate" resultType="map">
+        SELECT IFNULL(smr.rate,0) as rate,IFNULL(smr.single_num_amount,0) as single_num_amount,temp.isTx,temp.bp_name,temp.service_name
+        FROM service_manage_rate smr
+            JOIN (
+                     SELECT v2.service_id,v2.isTx,v2.bp_name,v2.service_name
+                     FROM (
+
+                              SELECT
+                                  si1.service_id,
+                                  si1.service_name,
+                                  CONCAT(si1.service_type, '-', IFNULL(si2.service_type, '')) AS service_type,
+                                  bpi.bp_id,
+                                  IFNULL(bpg.group_no, CONCAT('G',si1.service_id)) AS group_no,
+                                  bpd.bp_name,
+                                  IF(si2.service_type IS NULL, 0, 1) AS isTx
+                              FROM service_info si1
+                                  LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+                                  LEFT JOIN business_product_info bpi ON bpi.service_id = si1.service_id
+                                  LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+                                  LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+                              WHERE si1.effective_status = 1
+                              AND bpd.effective_status = 1
+
+                          ) v1
+                          left JOIN (
+                                       SELECT
+                                           si1.service_id,
+                                           si1.service_name,
+                                           CONCAT(si1.service_type, '-', IFNULL(si2.service_type, '')) AS service_type,
+                                           bpi.bp_id,
+                                           IFNULL(bpg.group_no, CONCAT('G',si1.service_id)) AS group_no,
+                                           bpd.bp_name,
+                                           IF(si2.service_type IS NULL, 0, 1) AS isTx
+                                       FROM service_info si1
+                                           LEFT JOIN service_info si2 ON si2.link_service = si1.service_id
+                                           LEFT JOIN business_product_info bpi ON bpi.service_id = si1.service_id
+                                           LEFT JOIN business_product_group bpg ON bpg.bp_id = bpi.bp_id
+                                           LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+                                       WHERE EXISTS (
+                                               SELECT 1 FROM agent_business_product
+                                               WHERE status=1
+                                                     AND bp_id = bpi.bp_id
+                                                     AND agent_no = #{agentNo}
+                                       )
+                                   ) v2 ON v1.service_type = v2.service_type AND v1.group_no = v2.group_no
+                     WHERE v1.service_id = #{rule.serviceId}
+                 )temp ON smr.service_id = temp.service_id
+                          AND smr.agent_no = #{oneLevelId}
+                          AND smr.card_type = #{rule.cardType}
+                          AND smr.holidays_mark =  #{rule.holidaysMark}
+        ORDER BY IF(temp.isTx = 1,smr.single_num_amount, smr.rate )
+        LIMIT 1
+    </select>
+
+    <select id="getLeaderAndMember" resultType="map">
+        SELECT bpg1.bp_id AS leader,bpg2.bp_id AS member FROM business_product_group bpg1
+        JOIN business_product_group bpg2 ON bpg2.group_no = bpg1.group_no AND bpg2.bp_id != bpg1.bp_id
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = bpg1.bp_id
+        LEFT JOIN business_product_define bpd2 ON bpd2.bp_id = bpg2.bp_id
+        WHERE EXISTS(
+        SELECT 1 FROM agent_business_product abp
+        WHERE abp.agent_no = #{agentNo}
+        AND abp.bp_id = bpg1.bp_id
+        )
+        AND bpd.allow_individual_apply = 1   <!-- 必须是可以单独申请的,确认是队长 -->
+        AND bpd.effective_status = 1
+        AND bpd2.effective_status = 1
+    </select>
+
+    <insert id="insertMemberAgentShare">
+        <!-- 这里使用REPLACE INTO 是因为 agent_no,service_id,card_type,holidays_mark 是组合唯一主键 -->
+        INSERT INTO agent_share_rule(agent_no,service_id,card_type,holidays_mark,efficient_date,
+        disabled_date,profit_type,per_fix_income,per_fix_inrate,safe_line,capping,
+        share_profit_percent,ladder,cost_rate_type,per_fix_cost,cost_rate,cost_capping,cost_safeline,
+        check_status,lock_status,ladder1_rate,ladder1_max,ladder2_rate,ladder2_max,ladder3_rate,
+        ladder3_max,ladder4_rate,ladder4_max)
+        <include refid="subListMemberAgentShareByLeader"/>
+        ON DUPLICATE KEY UPDATE
+        agent_no = sub.agent_no,
+        service_id = main.service_id,
+        card_type = sub.card_type,
+        holidays_mark = sub.holidays_mark,
+        efficient_date = sub.efficient_date,
+        disabled_date = sub.disabled_date,
+        profit_type = sub.profit_type,
+        per_fix_income = sub.per_fix_income,
+        per_fix_inrate = sub.per_fix_inrate,
+        safe_line = sub.safe_line,
+        capping = sub.capping,
+        share_profit_percent = sub.share_profit_percent,
+        ladder = sub.ladder,
+        cost_rate_type = sub.cost_rate_type,
+        per_fix_cost = sub.per_fix_cost,
+        cost_rate = sub.cost_rate,
+        cost_capping = sub.cost_capping,
+        cost_safeline = sub.cost_safeline,
+        check_status = sub.check_status,
+        lock_status = sub.lock_status,
+        ladder1_rate = sub.ladder1_rate,
+        ladder1_max = sub.ladder1_max,
+        ladder2_rate = sub.ladder2_rate,
+        ladder2_max = sub.ladder2_max,
+        ladder3_rate = sub.ladder3_rate,
+        ladder3_max = sub.ladder3_max,
+        ladder4_rate = sub.ladder4_rate,
+        ladder4_max = sub.ladder4_max
+    </insert>
+
+    <sql id="subListMemberAgentShareByLeader">
+        SELECT
+        sub.agent_no, main.service_id,sub.card_type,sub.holidays_mark,
+        sub.efficient_date,sub.disabled_date,sub.profit_type,sub.per_fix_income,
+        sub.per_fix_inrate,sub.safe_line,sub.capping,sub.share_profit_percent,
+        sub.ladder, sub.cost_rate_type,sub.per_fix_cost,sub.cost_rate,sub.cost_capping,
+        sub.cost_safeline,sub.check_status,sub.lock_status,sub.ladder1_rate,
+        sub.ladder1_max,sub.ladder2_rate,sub.ladder2_max,sub.ladder3_rate,sub.ladder3_max,
+        sub.ladder4_rate,sub.ladder4_max
+        FROM
+        (
+        <!-- 查出队员还没有加入agent_share_rule的分润数据 -->
+        SELECT si.service_name,si.service_type,
+        CONCAT(si.service_type,IFNULL(si2.service_type,'')) AS service_type2,
+        smr.*
+        FROM service_manage_rate smr
+        LEFT JOIN service_info si ON si.service_id = smr.service_id
+        LEFT JOIN service_info si2 ON si2.link_service = si.service_id
+        WHERE smr.agent_no = 0
+        and si.effective_status = 1  <!-- 队员的服务必须是有效 -->
+        AND EXISTS(
+        SELECT 1 FROM business_product_info bpi
+        WHERE bpi.bp_id = #{member}
+        AND bpi.service_id = smr.service_id
+        )
+        )main
+        JOIN
+        (
+        <!-- 查出队长已经加入agent_share_rule的分润数据-->
+        SELECT si.service_name,si.service_type,
+        CONCAT(si.service_type,IFNULL(si2.service_type,'')) AS service_type2,
+        smr.*
+        FROM agent_share_rule smr
+        LEFT JOIN service_info si ON si.service_id = smr.service_id
+        LEFT JOIN service_info si2 ON si2.link_service = si.service_id
+        WHERE smr.agent_no = #{agentNo}
+        AND EXISTS(
+        SELECT 1 FROM business_product_info bpi
+        WHERE bpi.bp_id =  #{leader}
+        AND bpi.service_id = smr.service_id
+        )
+        )sub ON  main.service_type2 = sub.service_type2
+        AND	    main.card_type = sub.card_type
+        AND 	main.holidays_mark = sub.holidays_mark
+    </sql>
+
+    <select id="existAgentByMobilephoneAndTeamId" resultType="int">
+        SELECT count(1) from agent_info where (team_id=#{agent.teamId}
+        and (mobilephone=#{agent.mobilephone}  OR agent_name=#{agent.agentName}
+        <if test="agent.email != null and agent.email != ''" >
+            OR email=#{agent.email}
+        </if>
+        ))
+        <if test="agent.id != null and agent.id != ''" >
+          and id != #{agent.id}
+        </if>
+    </select>
+
+    <select id="countDirectChildren" resultType="long">
+        select count(*) from agent_info
+        where parent_id = #{parentId}
+    </select>
+
+    <select id="getAgentShare" resultType="com.esdemo.modules.bean.AgentShareRule">
+        select * from agent_share_rule where id = #{shareId};
+    </select>
+
+    <select id="getLearderOrIndividualBpId" resultType="string">
+        SELECT bpd.bp_id FROM business_product_define bpd
+        LEFT JOIN business_product_group bpg ON bpg.bp_id = bpd.bp_id
+        LEFT JOIN agent_business_product abp ON abp.bp_id = bpd.bp_id
+        WHERE bpd.bp_id IN
+        <foreach collection="bpIds" item="bpId" open="(" close=")" separator=",">
+            #{bpId}
+        </foreach>
+        AND (bpd.allow_individual_apply=1 OR bpg.group_no IS NULL)
+        AND abp.agent_no = #{agentNo}
+        and bpd.effective_status = 1
+    </select>
+
+    <select id="selectByServiceId" resultType="com.esdemo.modules.bean.ServiceInfo">
+        select * from service_info where service_id = #{serviceId}
+    </select>
+
+    <select id="getNewAgentServicesByBpId" resultType="com.esdemo.modules.bean.ServiceRate">
+        SELECT
+        CONCAT(sd.sys_name, IF(si2.service_type IS NULL, '', '-提现')) as serviceTypeName,
+        bpi.bp_id,bpd.bp_name,si.service_id,si2.service_type AS service_type2,
+        si.service_name, si.service_type,bpd.allow_Individual_Apply,smr.*
+        FROM service_manage_rate smr
+        LEFT JOIN service_info si ON si.service_id = smr.service_id
+        LEFT JOIN service_info si2 ON si2.link_service = si.service_id
+        LEFT JOIN business_product_info bpi ON bpi.service_id = smr.service_id
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = bpi.bp_id
+        LEFT JOIN sys_dict sd ON sd.sys_key = 'SERVICE_TYPE' AND sd.sys_value = IFNULL(si2.service_type, si.service_type)
+        WHERE bpi.bp_id IN
+        <foreach collection="bpIds" item="bpId" open="(" close=")" separator=",">
+            #{bpId}
+        </foreach>
+        AND smr.agent_no = '0'
+        and si.effective_status = 1
+        ORDER BY bpi.bp_id, IFNULL(si.link_service, si.service_id), service_type2
+    </select>
+
+    <select id="listDirectChildren" resultType="com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info
+        where parent_id = #{parentId}
+        limit #{page.offset} , #{page.pageSize}
+    </select>
+
+    <select id="getAllDirectChildren" resultType="com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info
+        where parent_id = #{parentId}
+    </select>
+
+    <select id="selectBelongAgent" resultType="com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info where agent_no = #{agentNo} and parent_id = #{entityId}
+    </select>
+
+    <select id="getAgentInfoByNo" resultType="com.esdemo.modules.bean.AgentInfo">
+        SELECT a.*,p.agent_name parent_name FROM agent_info a
+        LEFT JOIN agent_info p ON a.parent_id=p.agent_no WHERE a.agent_no = #{agentNO}
+    </select>
+
+    <select id="getAgentInfoByName" resultType="com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info where agent_name = #{agentName}
+    </select>
+
+    <select id="getMerchantByNo" resultType="com.esdemo.modules.bean.MerchantInfo">
+        select * from merchant_info where merchant_no = #{merchantNo}
+    </select>
+
+    <select id="getMerchantByName" resultType="com.esdemo.modules.bean.MerchantInfo">
+        select * from merchant_info where merchant_name = #{merchantName}
+    </select>
+
+    <select id="selectByAgentNo" resultType="com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info where agent_no = #{agentNo}
+    </select>
+
+    <select id="selectAgentUser" resultType="com.esdemo.modules.bean.AgentUserInfo">
+        select * from  user_info where mobilephone = #{mobilephone} and team_id = #{teamId}
+    </select>
+
+    <select id="selectPoster" resultType="string">
+        select team_ad_url from team_ad where team_id = #{teamId}
+    </select>
+
+    <select id="selectByActivityTypeNo" resultType="map">
+        select cash_back_amount,tax_rate,repeat_register_amount,repeat_register_ratio
+        from agent_activity where agent_no = #{agentNo} and activity_type_no = #{activityTypeNo}
+    </select>
+
+    <select id="selectDefaultStatus" resultType="map">
+        SELECT * FROM agent_account_control where default_status = '1'
+    </select>
+
+    <select id="selectActivityBySn" resultType="map">
+        select  aht.activity_type_no,aht.activity_type_name
+        from  terminal_info ti
+        left join  activity_hardware_type  aht on aht.activity_type_no = ti.activity_type_no
+        where ti.sn = #{sn}
+    </select>
+
+    <select id="countAgentInfoByKeyword"  resultType="long">
+        select count(*) from agent_info
+        <include refid="commonWhereAgentInfoByKeyword"/>
+    </select>
+
+    <select id="listAgentInfoByKeyword" resultType="com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info
+        <include refid="commonWhereAgentInfoByKeyword"/>
+        limit #{page.offset} , #{page.pageSize}
+    </select>
+
+    <sql id="commonWhereAgentInfoByKeyword">
+        <where>
+            <choose>
+                <when test="agentType !=null and agentType == '1'.toString()">
+                    and parent_id = #{loginUserInfo.agentNo}
+                </when>
+                <when test="agentType !=null and agentType == '2'.toString()">
+                    and agent_node like concat(#{loginUserInfo.agentNode}, '%')
+                </when>
+                <when test="agentType !=null and agentType == '3'.toString()">
+                    and (parent_id = #{loginUserInfo.agentNo} or agent_no = #{loginUserInfo.agentNo})
+                </when>
+                <when test="agentType !=null and agentType == '4'.toString()">
+                    and agent_node like concat(#{loginUserInfo.agentNode}, '_%')
+                </when>
+                <otherwise>
+                    and agent_node like concat(#{loginUserInfo.agentNode}, '%')
+                </otherwise>
+            </choose>
+            <if test="keyword != null and keyword != ''">
+                and (
+                position(#{keyword} in agent_name)
+                or
+                agent_no = #{keyword}
+                or
+                mobilephone = #{keyword}
+                )
+            </if>
+        </where>
+    </sql>
+</mapper>

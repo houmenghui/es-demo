@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.EsDataMigrateDao">
+
+    <select id="queryMerchantInfo" resultType="com.esdemo.modules.bean.EsNpospDataBean">
+        SELECT
+            mi.id auto_id,
+            mi.merchant_no,
+            mi.merchant_name,
+            mi.mobilephone,
+            mi.agent_no,
+            IFNULL(mi.team_id, '') team_id,
+            IFNULL(mi.province,'') province,
+            IFNULL(mi.city, '') city,
+            IFNULL(mi.district, '') district,
+            mi.parent_node agent_node,
+            mi.hlf_active,
+            DATE_FORMAT(mi.create_time,'%Y-%m-%d %H:%i:%S') create_time,
+            DATE_FORMAT(mi.last_update_time, '%Y-%m-%dT%H:%i:%S.000Z') last_update_time,
+            IFNULL(mi.address, '') address,
+            IFNULL(mi.business_type, '') business_type,
+            IFNULL(mi.industry_type, '') industry_type,
+            mi.status,
+            mi.register_source,
+            mi.recommended_source,
+            mi.risk_status,
+            'merchant' `type`
+        FROM merchant_info mi
+        where mi.merchant_no = #{merchantNo}
+    </select>
+
+    <sql id="mbpColumns">
+        mbp.id auto_id,
+        mi.agent_no,
+        mi.parent_node agent_node,
+        mbp.id `mid`,
+        mbp.merchant_no,
+        mbp.bp_id,
+        mbp.`status`,
+        bpd.team_id,
+        mi.hlf_active,
+        DATE_FORMAT(mbp.create_time,'%Y-%m-%d %H:%i:%S') create_time,
+        DATE_FORMAT(mbp.last_update_time,'%Y-%m-%dT%H:%i:%S.000Z') last_update_time,
+        'mbp' `type`
+    </sql>
+    <select id="listMbpInfo" resultType="com.esdemo.modules.bean.EsNpospDataBean">
+        SELECT
+           <include refid="mbpColumns"/>
+        FROM merchant_business_product mbp
+        JOIN business_product_define bpd ON bpd.bp_id = mbp.bp_id
+        JOIN merchant_info mi ON mi.merchant_no = mbp.merchant_no
+        where mbp.merchant_no = #{merchantNo}
+    </select>
+
+    <select id="listMbpInfoByMerchantNoAndBpId" resultType="com.esdemo.modules.bean.EsNpospDataBean">
+        SELECT
+        <include refid="mbpColumns"/>
+        FROM merchant_business_product mbp
+        JOIN business_product_define bpd ON bpd.bp_id = mbp.bp_id
+        JOIN merchant_info mi ON mi.merchant_no = mbp.merchant_no
+        where mbp.merchant_no = #{merchantNo}
+        and mbp.bp_id = #{bpId}
+    </select>
+
+    <select id="listOrderInfo" resultType="com.esdemo.modules.bean.EsNpospDataBean">
+        SELECT
+            cto.id auto_id,
+            cto.order_no,
+            cto.merchant_no,
+            cto.trans_amount,
+            cto.pay_method,
+            cto.trans_status,
+            cto.trans_type,
+            cto.mobile_no mobilephone,
+            cto.card_type,
+            cto.account_no,
+            DATE_FORMAT(cto.create_time, '%Y-%m-%d %H:%i:%S') create_time,
+            DATE_FORMAT(cto.trans_time, '%Y-%m-%d %H:%i:%S') trans_time,
+            DATE_FORMAT(cto.last_update_time, '%Y-%m-%dT%H:%i:%S.000Z') last_update_time,
+            cto.business_product_id bp_id,
+            IFNULL(mi.team_id, '') team_id,
+            mi.agent_no,
+            mi.parent_node agent_node,
+            IFNULL(cto.service_id, '') service_id,
+            cto.settlement_method,
+            cto.settle_type,
+            IFNULL(cto.settle_status, '0') settle_status,
+            cto.device_sn,
+            'order' `type`
+        FROM
+            collective_trans_order cto
+        JOIN merchant_info mi ON mi.merchant_no = cto.merchant_no
+        LEFT JOIN business_product_define bpd ON bpd.bp_id = cto.business_product_id
+        WHERE cto.merchant_no = #{merchantNo}
+        ORDER BY cto.id ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+</mapper>

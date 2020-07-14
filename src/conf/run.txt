@@ -1,0 +1,32 @@
+mkdir -p /opt/logs/kqAgentApi2/
+touch /opt/logs/kqAgentApi2/kqAgentApi2.log
+case "$1" in
+start)
+   #nohup java -jar -Dspring.profiles.active=pro agentApi2-1.0-SNAPSHOT.jar  >/dev/null 2>&1 &
+   nohup java -classpath ".:./lib/*:./classes" -Dspring.profiles.active=pro com.esdemo.AgentApiApplication  >/dev/null 2>&1 &
+   echo $!>./run.pid
+   cat run.pid 
+   tail -f /opt/logs/kqAgentApi2/kqAgentApi2.log
+   ;;
+stop)
+   kill `cat ./run.pid`
+   rm ./run.pid
+   ;;
+restart)
+   $0 stop
+   $0 start
+   ;;
+status)
+   if [ -e ./run.pid ]; then
+      echo kqAgentApi2 is running, pid=`cat ./run.pid`
+   else
+      echo kqAgentApi2 is NOT running
+      exit 1
+   fi
+   ;;
+*)
+   echo "Usage: $0 {start|stop|status|restart}"
+esac
+
+exit 0
+

@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.ThreeDataDao">
+
+	<resultMap type="com.esdemo.modules.bean.ThreeDataCollect"
+		id="selectDetailByQoMap">
+		<result column="trans_sum" property="transSum"
+			jdbcType="VARCHAR" />
+		<result column="merchant_sum" property="merchantSum"
+			jdbcType="VARCHAR" />
+		<result column="activated_merchant_sum"
+			property="activatedMerchantSum" jdbcType="VARCHAR" />
+		<result column="create_time_str" property="lastUpdateTime"
+			jdbcType="VARCHAR" />
+		<result column="terminal_sum" property="terminalSum"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+
+	<resultMap type="com.esdemo.modules.bean.ThreeDataCollect"
+		id="countThreeDataCollectMap">
+		<result column="trans_sum" property="transSum"
+			jdbcType="VARCHAR" />
+		<result column="merchant_sum" property="merchantSum"
+			jdbcType="VARCHAR" />
+		<result column="activated_merchant_sum"
+			property="activatedMerchantSum" jdbcType="VARCHAR" />
+
+	</resultMap>
+	
+	<resultMap type="com.esdemo.modules.bean.ThreeDataCollect"
+		id="selectThreeDataCollectSectionByQoMap">
+		<result column="last_update_time" property="lastUpdateTime"
+			jdbcType="VARCHAR" />
+		<result column="terminal_sum" property="terminalSum"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+
+	<select id="countThreeDataCollect"
+		resultType="com.esdemo.modules.bean.ThreeDataCollect">
+
+		SELECT
+		sum( trade_sum ) AS trans_sum,
+		sum( mer_sum ) AS merchant_sum,
+		sum( activate_sum ) AS activated_merchant_sum
+		FROM
+		trade_sum_info
+		<where>
+			<if test="teamId != null and teamId != '' ">
+				AND team_id = #{teamId,jdbcType=VARCHAR}
+			</if>
+			<if test="agentNoList.size() > 0">
+				AND agent_no IN
+				<foreach collection="agentNoList" item="agentNo" open="("
+					separator="," close=")">
+					#{agentNo,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+		</where>
+
+	</select>
+
+	<select id="selectDetailByQo" resultMap="selectDetailByQoMap">
+		SELECT
+		t1.trans_sum AS trans_sum,
+		t1.merchant_sum AS merchant_sum,
+		t1.activated_merchant_sum AS activated_merchant_sum,
+		CONCAT(SUBSTR(t1.create_time_str, 5, 2),'月',SUBSTR(t1.create_time_str, 7, 2),'日') AS create_time_str,
+		t2.machines_stock AS terminal_sum
+		FROM
+		(
+		SELECT
+		sum( trade_sum ) AS trans_sum,
+		sum( mer_sum ) AS merchant_sum,
+		sum( activate_sum ) AS activated_merchant_sum,
+		DATE_FORMAT(create_time, '%Y%m%d' ) AS create_time_str
+		FROM
+		trade_sum_info
+		<where>
+			<if test="teamId != null and teamId != '' ">
+				AND team_id = #{teamId,jdbcType=VARCHAR}
+			</if>
+			<if test="agentNoList.size() > 0">
+				AND agent_no IN
+				<foreach collection="agentNoList" item="agentNo" open="("
+					separator="," close=")">
+					#{agentNo,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="yearMonth != null and yearMonth!='' ">
+				AND DATE_FORMAT(create_time, '%Y%m' ) =
+				#{yearMonth,jdbcType=VARCHAR}
+			</if>
+		</where>
+		GROUP BY
+		create_time_str
+		) t1
+		JOIN (
+		SELECT
+		sum( machines_stock ) AS machines_stock,
+		DATE_FORMAT(create_time, '%Y%m%d' ) AS create_time_str
+		FROM
+		trade_sum_info
+		<where>
+			<if test="teamId != null and teamId != '' ">
+				AND team_id = #{teamId,jdbcType=VARCHAR}
+			</if>
+			<if test="agentNoList.size() > 0">
+				AND agent_no IN
+				<foreach collection="agentNoList" item="agentNo" open="("
+					separator="," close=")">
+					#{agentNo,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="yearMonth != null and yearMonth!='' ">
+				AND DATE_FORMAT(create_time, '%Y%m' ) =
+				#{yearMonth,jdbcType=VARCHAR}
+			</if>
+		</where>
+		GROUP BY
+		create_time_str
+		) t2 ON t1.create_time_str = t2.create_time_str
+		ORDER BY
+			t1.create_time_str DESC
+
+	</select>
+
+	<select id="countTerminalSumByAgentNoListAndTeamIdAndCreateTime"
+		resultType="String">
+		SELECT
+		sum( machines_stock )
+		FROM
+		trade_sum_info
+		<where>
+			<if test="teamId != null and teamId != '' ">
+				AND team_id = #{teamId,jdbcType=VARCHAR}
+			</if>
+			<if test="agentNoList.size() > 0">
+				AND agent_no IN
+				<foreach collection="agentNoList" item="agentNo" open="("
+					separator="," close=")">
+					#{agentNo,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			AND DATE_FORMAT(create_time, '%Y%m%d' ) = DATE_FORMAT(#{date,jdbcType=TIMESTAMP}, '%Y%m%d' )
+		</where>
+
+	</select>
+
+	<select id="selectThreeDataCollectByQo"
+		resultMap="countThreeDataCollectMap">
+		SELECT
+		sum( trade_sum ) AS trans_sum,
+		sum( mer_sum ) AS merchant_sum,
+		sum( activate_sum ) AS activated_merchant_sum
+		FROM
+		trade_sum_info
+		<where>
+			<if test="teamId != null and teamId != '' ">
+				AND team_id = #{teamId,jdbcType=VARCHAR}
+			</if>
+			<if test="agentNoList.size() > 0">
+				AND agent_no IN
+				<foreach collection="agentNoList" item="agentNo" open="("
+					separator="," close=")">
+					#{agentNo,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="yearMonth != null and yearMonth!='' ">
+				AND DATE_FORMAT(create_time, '%Y%m' ) =
+				#{yearMonth,jdbcType=VARCHAR}
+			</if>
+		</where>	
+		
+	</select>
+	
+	<select id="selectThreeDataCollectSectionByQo" resultMap="selectThreeDataCollectSectionByQoMap" >
+		SELECT
+			sum( machines_stock ) as terminal_sum,
+			DATE_FORMAT(create_time, '%Y年%m月' ) as last_update_time
+		FROM
+			trade_sum_info 
+		WHERE
+			DATE_FORMAT(create_time, '%Y%m%d' ) =
+				DATE_FORMAT( ( SELECT create_time FROM trade_sum_info
+			 <where>
+				<if test="yearMonth != null and yearMonth!='' ">
+					AND DATE_FORMAT(create_time, '%Y%m' ) =
+					#{yearMonth,jdbcType=VARCHAR}
+				</if>
+			</where>
+			 GROUP BY create_time ORDER BY create_time DESC LIMIT 1 ), '%Y%m%d' )
+			
+			<if test="teamId != null and teamId != '' ">
+				AND team_id = #{teamId,jdbcType=VARCHAR}
+			</if>
+			<if test="agentNoList.size() > 0">
+				AND agent_no IN
+				<foreach collection="agentNoList" item="agentNo" open="("
+					separator="," close=")">
+					#{agentNo,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+	</select>
+	 
+	 <resultMap type="com.esdemo.modules.bean.ThreeDataHome"
+		id="getYesterdayTradeSumAndTotalMerchantNumByAgentNoListMap">
+		<result column="yesterday_trade_sum" property="yesterdayTradeSum"
+			jdbcType="VARCHAR" />
+		<result column="total_merchant_num" property="totalMerchantNum"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+	<select id="getYesterdayTradeSumAndTotalMerchantNumByAgentNoList" resultMap="getYesterdayTradeSumAndTotalMerchantNumByAgentNoListMap">
+		SELECT
+			sum( trade_sum ) AS yesterday_trade_sum
+		FROM
+			trade_sum_info 
+		WHERE
+			to_days( now( ) ) - to_days( create_time ) = 1 
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>		
+	</select>
+	
+	<select id="getYesterdayTotalMerchantNumByAgentNoList" resultType="Long">
+		SELECT
+			sum( mer_sum )
+		FROM
+			trade_sum_info 
+		WHERE
+			to_days( now( ) ) - to_days( create_time ) = 1 
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>				
+	</select>
+	
+	<select id="getTotalMerchantNumByAgentNoList" resultType="Long">
+		SELECT
+			sum( mer_sum )
+		FROM
+			trade_sum_info 
+	<where>
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>
+	</where>				
+	</select>
+	
+	<select id="countTotalAgent" resultType="Long">
+		SELECT
+			sum(total_agent_num) 
+		FROM
+			trade_sum_info 
+		WHERE
+			to_days( now( ) ) - to_days( create_time ) = 1 	
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+			AND agent_no = #{agentNo}
+	</select>
+	 
+	 <resultMap type="com.esdemo.modules.bean.ThreeDataHome"
+		id="getCurrentMonthTradeSumAndCurrentMonthTradeCountByAgentNoListMap">
+		<result column="current_month_trade_sum" property="currentMonthTradeSum"
+			jdbcType="VARCHAR" />
+		<result column="current_month_trade_count" property="currentMonthTradeCount"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+	<select id="getCurrentMonthTradeSumAndCurrentMonthTradeCountByAgentNoList" resultMap="getCurrentMonthTradeSumAndCurrentMonthTradeCountByAgentNoListMap">
+		SELECT
+			sum( trade_sum ) AS current_month_trade_sum,
+			sum( trade_count ) AS current_month_trade_count 
+		FROM
+			trade_sum_info 
+		WHERE
+			DATE_FORMAT( create_time, '%Y%m' ) = DATE_FORMAT( CURDATE( ) , '%Y%m' )
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>		
+	</select>
+	
+	<select id="getCurrentMonthAddAgentNumByAgentNo" resultType="Long">
+		SELECT
+			(
+		SELECT
+		IF
+			(
+			DATE_FORMAT( now( ), '%Y-%m-%d' ) = DATE_ADD( curdate( ), INTERVAL - DAY ( curdate( ) ) + 1 DAY ),
+			0,
+			sum( total_agent_num ) 
+			) AS total_agent_num 
+		FROM
+			trade_sum_info 
+		WHERE
+			to_days( now( ) ) - to_days( create_time ) = 1 
+			AND agent_no = #{agentNo} 
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+			) - (
+		SELECT
+		IF
+			( sum( total_agent_num ) IS NULL, 0, sum( total_agent_num ) ) AS total_agent_num 
+		FROM
+			trade_sum_info 
+		WHERE
+			DATE_FORMAT( create_time, '%Y-%m-%d' ) = DATE_ADD( curdate( ), INTERVAL - DAY ( curdate( ) ) + 1 DAY ) 
+			AND agent_no = #{agentNo}  
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if>
+			)
+	</select>
+	
+	<select id="getCurrentMonthAddMerchantNumByAgentNoList" resultType="Long">
+		SELECT
+		IF
+			( sum( mer_sum ) IS NULL, 0, sum( mer_sum ) )
+		FROM
+			trade_sum_info 
+		WHERE
+			DATE_FORMAT(create_time, '%Y%m' ) = DATE_FORMAT( CURDATE( ) , '%Y%m' )
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if> 
+				
+	</select>
+
+	<select id="selectChildrenAgentByAgentNoAndKeyword" resultType="com.esdemo.modules.bean.AgentSelectVo">
+		SELECT t1.agent_no, t1.agent_name FROM agent_info t1
+		JOIN agent_authorized_link t2 ON t1.agent_no = t2.agent_link WHERE t1.agent_level = 1
+		AND t2.agent_authorized = #{agentNo} AND t2.link_level &lt;= 5
+		AND t2.record_status = 1 AND t2.record_check = 1 AND t2.is_look = 1
+		<if test="keyword != null and keyword.length > 0">
+			AND (t1.agent_name LIKE CONCAT(#{keyword}, '%') OR t1.agent_no = #{keyword} OR t1.mobilephone = #{keyword})
+		</if>
+	</select>
+	
+ 	<resultMap type="com.esdemo.modules.bean.TradeTrend"
+		id="tradeTrendMap">
+		<result column="trade_sum" property="tradeSum"
+			jdbcType="DECIMAL" />
+		<result column="date_str" property="dateStr"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+	<select id="tradeTrend" resultMap="tradeTrendMap" >
+		SELECT
+			sum( trade_sum ) as trade_sum,
+		<if test="type==1">
+			DATE_FORMAT( create_time, '%m-%d' )  as date_str
+		</if>
+		<if test="type==2">
+			DATE_FORMAT( create_time, '%Y-%m' ) AS date_str 
+		</if>
+		FROM
+			trade_sum_info 
+		WHERE
+		<if test="type == 1">
+			DATE_SUB( CURDATE( ), INTERVAL 7 DAY ) &lt;= date( create_time ) 
+		</if>
+		<if test="type == 2">
+			create_time BETWEEN date_sub( now( ), INTERVAL 6 MONTH ) 
+			AND date_sub( now( ), INTERVAL 1 MONTH ) 
+		</if>
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if> 
+		GROUP BY
+		<choose>
+			<when test="type==1">
+			date_str
+			</when>
+			<otherwise>
+			date_str
+			</otherwise>		
+		</choose>
+	</select>
+	
+	<resultMap type="com.esdemo.modules.bean.MerTrend"
+		id="merTrendMap">
+		<result column="mer_sum" property="merSum"
+			jdbcType="BIGINT" />
+		<result column="date_str" property="dateStr"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+	<select id="merTrend" resultMap="merTrendMap">
+		SELECT
+			sum( mer_sum ) as mer_sum,
+		<if test="type==1">
+			DATE_FORMAT( create_time, '%m-%d' )  as date_str
+		</if>
+		<if test="type==2">
+			DATE_FORMAT( create_time, '%Y-%m' ) AS date_str 
+		</if>
+		FROM
+			trade_sum_info 
+		WHERE
+		<if test="type == 1">
+			DATE_SUB( CURDATE( ), INTERVAL 7 DAY ) &lt;= date( create_time ) 
+		</if>
+		<if test="type == 2">
+			create_time BETWEEN date_sub( now( ), INTERVAL 6 MONTH ) 
+			AND date_sub( now( ), INTERVAL 0 MONTH ) 
+		</if>
+		<if test="agentNoList.size() > 0">
+			AND agent_no IN
+			<foreach collection="agentNoList" item="agentNo" open="("
+				separator="," close=")">
+				#{agentNo,jdbcType=VARCHAR}
+			</foreach>
+		</if>
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if> 
+		GROUP BY
+		<choose>
+			<when test="type==1">
+			date_str
+			</when>
+			<otherwise>
+			date_str
+			</otherwise>		
+		</choose>
+	</select>
+	
+	<resultMap type="com.esdemo.modules.bean.AgentTrend"
+		id="agentTrendMap">
+		<result column="total_agent_num" property="totalAgentNum"
+			jdbcType="BIGINT" />
+		<result column="date_str" property="dateStr"
+			jdbcType="VARCHAR" />
+
+	</resultMap>
+	<select id="agentTrend" resultMap="agentTrendMap">
+		SELECT
+			 total_agent_num as total_agent_num,
+		<if test="type==1">
+			DATE_FORMAT( create_time, '%m-%d' )  as date_str
+		</if>
+		<if test="type==2">
+			DATE_FORMAT( create_time, '%Y-%m' ) AS date_str 
+		</if>
+		FROM
+			trade_sum_info 
+		WHERE
+		<if test="type == 1">
+			DATE_SUB( CURDATE( ), INTERVAL 8 DAY ) &lt;= date( create_time ) 
+		</if>
+		<if test="type == 2">
+			create_time BETWEEN date_sub( now( ), INTERVAL 7 MONTH ) 
+			AND date_sub( now( ), INTERVAL 1 MONTH ) 
+		</if>
+		
+			AND agent_no = #{agentNo}
+			
+		<if test="teamId != null and teamId != '' ">
+			AND team_id = #{teamId,jdbcType=VARCHAR}
+		</if> 
+		GROUP BY
+		<choose>
+			<when test="type==1">
+			date_str
+			</when>
+			<otherwise>
+			date_str
+			</otherwise>		
+		</choose>
+	</select>
+</mapper>

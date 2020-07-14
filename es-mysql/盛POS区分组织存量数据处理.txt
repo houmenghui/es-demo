@@ -1,0 +1,149 @@
+##处理存量交易数据
+POST kq_nposp_es/_update_by_query?conflicts=proceed
+{
+	"script": {
+		"source": "ctx._source['team_entry_id']='100070-001'"
+	},
+	"query": {
+		"bool": {
+			"filter": [{
+				"term": {
+					"type": {
+						"value": "order",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"term": {
+					"team_id": {
+						"value": "100070",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"has_parent": {
+					"parent_type": "merchant",
+					"query": {
+						"match": {
+							"team_entry_id.keyword": "100070-001"
+						}
+					}
+				}
+			}],
+			"adjust_pure_negative": true,
+			"boost": 1.0
+		}
+	}
+}
+
+POST kq_nposp_es/_update_by_query?conflicts=proceed
+{
+	"script": {
+		"source": "ctx._source['team_entry_id']='100070-002'"
+	},
+	"query": {
+		"bool": {
+			"filter": [{
+				"term": {
+					"type": {
+						"value": "order",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"term": {
+					"team_id": {
+						"value": "100070",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"has_parent": {
+					"parent_type": "merchant",
+					"query": {
+						"match": {
+							"team_entry_id.keyword": "100070-002"
+						}
+					}
+				}
+			}],
+			"adjust_pure_negative": true,
+			"boost": 1.0
+		}
+	}
+}
+
+##存量进件数据处理
+POST kq_nposp_es/_update_by_query?conflicts=proceed
+{
+	"script": {
+		"source": "ctx._source['team_entry_id']='100070-001'"
+	},
+	"query": {
+		"bool": {
+			"filter": [{
+				"term": {
+					"type": {
+						"value": "mbp",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"term": {
+					"team_id": {
+						"value": "100070",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"has_parent": {
+					"parent_type": "merchant",
+					"query": {
+						"match": {
+							"team_entry_id.keyword": "100070-001"
+						}
+					}
+				}
+			}],
+			"adjust_pure_negative": true,
+			"boost": 1.0
+		}
+	}
+}
+
+POST kq_nposp_es/_update_by_query?conflicts=proceed
+{
+	"script": {
+		"source": "ctx._source['team_entry_id']='100070-002'"
+	},
+	"query": {
+		"bool": {
+			"filter": [{
+				"term": {
+					"type": {
+						"value": "mbp",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"term": {
+					"team_id": {
+						"value": "100070",
+						"boost": 1.0
+					}
+				}
+			}, {
+				"has_parent": {
+					"parent_type": "merchant",
+					"query": {
+						"match": {
+							"team_entry_id.keyword": "100070-002"
+						}
+					}
+				}
+			}],
+			"adjust_pure_negative": true,
+			"boost": 1.0
+		}
+	}
+}

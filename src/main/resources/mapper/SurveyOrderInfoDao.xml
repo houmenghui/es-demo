@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.SurveyOrderInfoDao">
+
+    <select id="selectTransOrder" resultType = "map">
+        select * from collective_trans_order where order_no = #{transOrderNo}
+    </select>
+
+    <select id="getMerchantByNo" resultType = "com.esdemo.modules.bean.MerchantInfo">
+        select * from merchant_info where merchant_no = #{merchantNo}
+    </select>
+
+    <select id="getDictList" resultType = "map">
+        select * from sys_dict where sys_key = #{sys_key} and sys_value != 'STRING'
+    </select>
+
+    <select id="queryAgentInfoByNo" resultType = "com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info where agent_no = #{agentNo}
+    </select>
+
+    <select id="selectByAgentNode" resultType = "com.esdemo.modules.bean.AgentInfo">
+        select * from agent_info where agent_node = #{agentNode}
+    </select>
+
+    <select id="selectSurveyOrderInfoByOneAgent" resultType = "list">
+        select * from survey_order_info where agent_node like concat(#{agentNode},'%') and order_status = '1'
+		and (reply_status in ('0','1','3','4')
+		or (deal_status in ('2','3','6') and final_have_look_no not like concat('%',#{agentNo},'%' )))
+    </select>
+
+    <select id="selectSurveyOrderInfo" resultType = "list">
+        select * from survey_order_info where agent_node = #{agentNode} and order_status = '1'
+		and (reply_status in ('0','3')
+		or (deal_status in ('2','3','6') and final_have_look_no not like concat('%',#{agentNo},'%' )))
+    </select>
+
+    <select id="selectByOrderNo" resultType = "map">
+        select * from survey_order_info where order_no = #{orderNo}
+    </select>
+
+    <select id="selectAddrees" resultType = "map">
+        select rules_provinces,rules_city from risk_rules where rules_no = '114' and status = '1'
+    </select>
+
+    <select id="selectSurveyOrderDetail" resultType = "map">
+        select soi.*,cto.trans_status,
+		(select s.out_amount FROM settle_transfer s
+		where s.order_no = cto.order_no AND s.STATUS = '4' AND s.correction = '0' LIMIT 1) amount
+		from survey_order_info soi
+		left join collective_trans_order cto on cto.order_no = soi.trans_order_no
+		where soi.order_no = #{orderNo} and soi.agent_node like concat(#{agentNode} ,'%')
+    </select>
+
+    <select id="selectReplyDetail" resultType = "map">
+        select * from survey_reply_record where order_no = #{orderNo} order by id desc limit 1
+    </select>
+
+    <select id="selectReplyRecord" resultType = "map">
+        select * from survey_reply_record where order_no = #{orderNo}
+    </select>
+
+    <insert id="insertReply" parameterType="map" >
+        insert into survey_reply_record(order_no, agent_node, reply_role_type, reply_role_no, reply_result,
+		mer_name, mer_mobile,card_person_name,card_person_mobile, real_name, province,
+		city, trans_address,reply_files_name, reply_remark,create_time)
+		values (#{params.order_no},#{params.agent_node},#{params.reply_role_type},#{params.reply_role_no},
+		#{params.reply_result},#{params.mer_name},#{params.mer_mobile},#{params.card_person_name},
+		#{params.card_person_mobile},#{params.real_name},#{params.province},
+		#{params.city},#{params.trans_address},#{params.reply_files_name},#{params.reply_remark},now())
+    </insert>
+
+    <update id="updateReply" parameterType="map" >
+        update survey_reply_record set reply_role_type = #{params.reply_role_type}, reply_role_no = #{params.reply_role_no},
+		reply_result = #{params.reply_result},mer_name = #{params.mer_name},  mer_mobile = #{params.mer_mobile},
+		card_person_name = #{params.card_person_name}, card_person_mobile = #{params.card_person_mobile},
+		real_name = #{params.real_name},province = #{params.province},city = #{params.city},
+		trans_address = #{params.trans_address},reply_files_name = #{params.reply_files_name},
+		 reply_remark = #{params.reply_remark} where order_no = #{params.order_no} and id = #{params.id}
+    </update>
+
+    <update id="updateSurveyOrderInfo">
+        update survey_order_info set reply_status = #{replyStatus} where order_no = #{orderNo}
+    </update>
+
+    <update id="updateSurveyOrderInfoByOneAgent">
+        update survey_order_info set reply_status = #{replyStatus},deal_status = '0' where order_no = #{orderNo}
+    </update>
+
+    <update id="updateDealStatus">
+        update survey_order_info set deal_status = '0' where order_no = #{orderNo}
+    </update>
+
+    <update id="updateFinalHaveLookNo">
+        update survey_order_info set final_have_look_no = #{finalHaveLookNo} where order_no = #{orderNo}
+    </update>
+
+    <select id="selectReplyRecordCount" resultType="int">
+        select count(1) from survey_reply_record where order_no = #{orderNo}
+    </select>
+
+    <select id="selectForUpdate" resultType="map">
+        select * from survey_order_info where id = #{id} for update
+    </select>
+
+    <select id="selectReplyRoleNo" resultType="string">
+        select reply_role_no from survey_reply_record where order_no = #{orderNo} order by create_time desc limit 1
+    </select>
+
+    <select id="selectFinalHaveLookNo" resultType="string">
+        select final_have_look_no from survey_order_info where order_no = #{orderNo}
+    </select>
+
+    <select id="selectSurveyOrderByConditions" resultType="map">
+        SELECT soi.*,ti.trans_status FROM survey_order_info soi
+        left join collective_trans_order ti on ti.order_no = soi.trans_order_no
+        left join agent_info ai on ai.agent_node = soi.agent_node
+        <where>
+            soi.deal_status != '9' and soi.order_status = '1' and soi.order_service_code != '3'
+            <choose>
+                <when test="'0' == params.flag" >
+                    <choose>
+                        <when test="params.agent_node != null and params.agent_node != ''">
+                            and soi.agent_node = #{params.agent_node}
+                        </when>
+                        <otherwise>
+                            and soi.agent_node = #{params.entityNode}
+                        </otherwise>
+                    </choose>
+                </when>
+                <when test="'0' != params.flag">
+                    <choose>
+                        <when test="params.agent_node != null and params.agent_node != ''">
+                            and soi.agent_node like concat( #{params.agent_node},'%')
+                        </when>
+                        <otherwise>
+                            and soi.agent_node like concat(#{params.entityNode},'%')
+                        </otherwise>
+                    </choose>
+                </when>
+            </choose>
+            <if test="params.agent_name != null and params.agent_name != ''">
+                and ai.agent_name like concat(#{params.agent_name},'%')
+            </if>
+            <if test="params.merchant_no != null and params.merchant_no != ''">
+                and soi.merchant_no = #{params.merchant_no}
+            </if>
+            <if test="params.order_no != null and params.order_no != ''">
+                and soi.trans_order_no = #{params.order_no}
+            </if>
+            <if test="params.acq_reference_no != null and params.acq_reference_no != ''">
+                and soi.acq_reference_no = #{params.acq_reference_no}
+            </if>
+            <if test="params.trans_account_no != null and params.trans_account_no != ''">
+                and soi.trans_account_no = #{params.trans_account_no}
+            </if>
+            <if test="params.order_type_code != null and params.order_type_code != ''">
+                and soi.order_type_code = #{params.order_type_code}
+            </if>
+            <if test="params.order_service_code != null and params.order_service_code != ''">
+                and soi.order_service_code = #{params.order_service_code}
+            </if>
+            <if test="params.reply_status != null and params.reply_status != ''">
+                and soi.reply_status = #{params.reply_status}
+            </if>
+            <if test="params.deal_status != null and params.deal_status != ''">
+                <choose>
+                    <when test="params.deal_status == '1'">
+                        and soi.deal_status in (1,2,3,4,5,6,7)
+                    </when>
+                    <otherwise>
+                        and soi.deal_status = #{params.deal_status}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="params.pay_method != null and params.pay_method != ''">
+                and soi.pay_method = #{params.pay_method}
+            </if>
+            <if test="params.trans_status != null and params.trans_status != ''">
+                and ti.trans_status = #{params.trans_status}
+            </if>
+            <if test="params.create_time_start != null and params.create_time_start != ''">
+                and soi.create_time >= #{params.create_time_start}
+            </if>
+            <if test="params.create_time_end != null and params.create_time_end != ''">
+                and soi.create_time &lt;= #{params.create_time_end}
+            </if>
+            <if test="params.reply_end_time_start != null and params.reply_end_time_start != ''">
+                and soi.reply_end_time >= #{params.reply_end_time_start}
+            </if>
+            <if test="params.reply_end_time_end != null and params.reply_end_time_end != ''">
+                and soi.reply_end_time &lt;= #{params.reply_end_time_end}
+            </if>
+        </where>
+        order by soi.create_time asc
+    </select>
+
+</mapper>

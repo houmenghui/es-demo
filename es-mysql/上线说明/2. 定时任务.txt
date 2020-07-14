@@ -1,0 +1,35 @@
+日返现收益汇总定时任务
+0 18 0 * * ?
+/timeTask/CollectHpbDayTask/implCollectHpbDay
+
+
+
+
+日结算收益汇总定时任务
+0 28 0 * * ?
+/timeTask/CollectSettleDayTask/implCollectSettleDay
+
+
+
+日交易收益汇总定时任务
+0 48 0 * * ?
+/timeTask/CollectTransDayTask/implCollectTransDay
+
+
+
+
+月返现收益汇总定时任务
+0 0 4 1 * ?
+/timeTask/CollectHpbMonthTask/implCollectHpbMonth
+
+
+
+月结算收益汇总定时任务
+0 0 4 1 * ?
+/timeTask/CollectSettleMonthTask/implCollectSettleMonth
+
+
+
+月交易收益汇总定时任务
+0 0 4 1 * ?
+/timeTask/CollectTransMonthTask/implCollectTransMonth

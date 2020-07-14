@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.TerminalApplyRecordDao">
+
+    <select id="getAgentInfoByNo" resultType="com.esdemo.modules.bean.AgentInfo">
+        SELECT a.*,p.agent_name parent_name FROM agent_info a
+        LEFT JOIN agent_info p ON a.parent_id=p.agent_no WHERE a.agent_no = #{agentNO}
+    </select>
+
+    <select id="countTerminalApplyRecord" resultType="int">
+        select count(1) from terminal_apply ta join merchant_info m
+        where ta.`STATUS`!='1' and m.merchant_no = ta.merchant_no and m.parent_node like concat(#{agentNode}  ,'%')
+    </select>
+
+    <update id="distributionTerminalInfo" parameterType="map" >
+        update terminal_info set open_status='1', agent_no=#{agent_no}, agent_node = #{agent_node} where sn = #{SN}
+    </update>
+
+
+</mapper>

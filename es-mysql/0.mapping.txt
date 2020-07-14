@@ -1,0 +1,200 @@
+PUT kq_nposp_es
+{
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "type_name": {
+          "type": "join",
+          "relations": {
+            "agent": "merchant",
+            "merchant": ["order","mbp"]
+          }
+        },
+        "type": {
+            "type": "keyword",
+            "store": true
+        },
+        "hlf_active": {
+            "type": "keyword",
+            "store": true
+        },
+        "agent_no": {
+            "type": "keyword",
+            "store": true
+        },
+        "parent_id": {
+            "type": "keyword",
+            "store": true
+        },
+        "agent_node": {
+            "type": "text",
+            "store": true,
+            "analyzer":"whitespace",
+            "fields": {
+                "key":{
+                    "type":"keyword"
+                }
+            }
+        },
+        "agent_name": {
+            "type": "text",
+            "store": true
+        },
+        "one_level_id": {
+            "type": "keyword",
+            "store": true
+        },
+        "trans_amount": {
+            "type": "double",
+            "store": true
+        },
+        "province": {
+            "type": "text",
+            "store": true,
+            "fields": {
+                "key":{
+                    "type":"keyword"
+                }
+            }
+        },
+        "city": {
+            "type": "text",
+            "store": true,
+            "fields": {
+                "key":{
+                    "type":"keyword"
+                }
+            }
+        },
+        "district": {
+            "type": "text",
+            "store": true,
+            "fields": {
+                "key":{
+                    "type":"keyword"
+                }
+            }
+        },
+        "address": {
+            "type": "text",
+            "store": true
+        },
+        "bp_id": {
+            "type": "keyword",
+            "store": true
+        },
+        "team_id": {
+            "type": "keyword",
+            "store": true
+        },
+        "mid": {
+            "type": "keyword",
+            "store": true
+        },
+        "merchant_no": {
+            "type": "keyword",
+            "store": true
+        },
+        "mobilephone": {
+            "type": "keyword",
+            "store": true
+        },
+        "merchant_name": {
+            "type": "text",
+            "store": true
+        },
+        "register_source":{
+            "type": "keyword",
+            "store": true
+        },
+        "recommended_source":{
+            "type": "keyword",
+            "store": true
+        },
+        "business_type":{
+            "type": "keyword",
+            "store": true
+        },
+        "industry_type":{
+            "type": "keyword",
+            "store": true
+        },
+        "risk_settle":{
+            "type": "keyword",
+            "store": true
+        },
+        "risk_status":{
+            "type": "keyword",
+            "store": true
+        },
+        "card_type": {
+            "type": "keyword",
+            "store": true
+        },
+        "account_no": {
+            "type": "keyword",
+            "store": true
+        },
+        "status": {
+            "type": "keyword",
+            "store": true
+        },
+        "order_no": {
+            "type": "keyword",
+            "store": true
+        },
+        "pay_method": {
+            "type": "keyword",
+            "store": true
+        },
+        "trans_status": {
+            "type": "keyword",
+            "store": true
+        },
+        "device_sn": {
+            "type": "keyword",
+            "store": true
+        },
+        "trans_type": {
+            "type": "keyword",
+            "store": true
+        },
+        "service_id": {
+            "type": "keyword",
+            "store": true
+        },
+        "settlement_method":{
+            "type": "keyword",
+            "store": true
+        },
+        "settle_type":{
+            "type": "keyword",
+            "store": true
+        },
+        "settle_status":{
+            "type": "keyword",
+            "store": true
+        },
+        "trans_time": {
+            "type": "date",
+            "store": true,
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd"
+        },
+        "active_time": {
+            "type": "date",
+            "store": true,
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd"
+        },
+        "create_time": {
+            "type": "date",
+            "store": true,
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd"
+        },
+        "last_update_time": {
+            "type": "date",
+            "store": true
+        }
+      }
+    }
+  }
+}

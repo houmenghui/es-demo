@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.AccessDao">
+
+    <select  id="canAccessTheMerchant" resultType="int">
+        SELECT count(*) FROM merchant_info
+        WHERE merchant_no = #{merchantNo}
+        <if test="isOwn == true">
+            and parent_node = #{agentNode}
+        </if>
+        <if test="isOwn == false">
+            and parent_node like CONCAT(#{agentNode}, '%')
+        </if>
+    </select>
+
+    <select  id="canAccessTheMerchantWithKey" resultType="int">
+        SELECT count(*) FROM merchant_info
+        WHERE (merchant_no = #{merchantKey} OR merchant_name like CONCAT(#{merchantKey}, '%'))
+        <if test="isOwn == true">
+            and parent_node = #{agentNode}
+        </if>
+        <if test="isOwn == false">
+            and parent_node like CONCAT(#{agentNode}, '%')
+        </if>
+    </select>
+
+
+    <select id="canAccessTheAgent" resultType="int">
+        select count(*) from agent_info
+        where agent_no = #{agentNo}
+        and agent_node like CONCAT(#{agentNode}, '%')
+    </select>
+
+    <select id="getRepayMerNoByV2MerKey" resultType="java.lang.String">
+        SELECT yuap.pro_mer_no FROM yfb_unified_account_product yuap
+        LEFT JOIN yfb_unified_account_product yuap2 ON (yuap.un_account_mer_no = yuap2.un_account_mer_no)
+        LEFT JOIN merchant_info mi ON (yuap2.pro_code = 'gatherService' AND yuap2.pro_mer_no = mi.merchant_no)
+        WHERE yuap.pro_code = 'repay' and (mi.merchant_no = #{v2MerKey} OR mi.merchant_name like CONCAT(#{v2MerKey}, '%'))
+        <if test="isOwn == true">
+            and mi.parent_node = #{agentNode}
+        </if>
+        <if test="isOwn == false">
+            and mi.parent_node like CONCAT(#{agentNode}, '%')
+        </if>
+    </select>
+</mapper>

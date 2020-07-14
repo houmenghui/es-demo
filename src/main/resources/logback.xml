@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stdout" class="com.esdemo.frame.log.FilterConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="rollingFile"
+              class="com.esdemo.frame.log.FilterRollingFileAppender">
+        <file>/opt/logs/kqAgentApi2/kqAgentApi2.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/opt/logs/agentApi2/agentApi2.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!--<fileNamePattern>/opt/logs/agentApi2/agentApi2.%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
+            <!--<timeBasedFileNamingAndTriggeringPolicy-->
+                    <!--class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">-->
+                <!--<maxFileSize>500MB</maxFileSize>-->
+            <!--</timeBasedFileNamingAndTriggeringPolicy>-->
+            <maxHistory>93</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="com.ys.adage.mapper" level="info" additivity="false">
+        <appender-ref ref="rollingFile"/>
+    </logger>
+
+    <appender name="async-stdout" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="stdout"/>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+    <appender name="async-rollingFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="rollingFile"/>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+    <logger name="com.ibatis" level="DEBUG" />
+    <logger name="com.ibatis.common.jdbc.SimpleDataSource" level="DEBUG" />
+    <logger name="com.ibatis.common.jdbc.ScriptRunner" level="DEBUG" />
+    <logger name="com.ibatis.sqlmap.engine.impl.SqlMapClientDelegate" level="DEBUG" />
+    <logger name="java.sql.Connection" level="DEBUG" />
+    <logger name="java.sql.Statement" level="DEBUG" />
+    <logger name="java.sql.PreparedStatement" level="DEBUG" />
+
+    <logger name="org.quartz.impl.jdbcjobstore.JobStoreTX" level="INFO"/>
+    <logger name="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore" level="INFO"/>
+    <logger name="org.springframework.amqp.rabbit.core.RabbitTemplate" level="INFO"/>
+    <logger name="org.springframework.amqp.rabbit.listener.BlockingQueueConsumer" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="async-stdout"/>
+        <appender-ref ref="async-rollingFile"/>
+    </root>
+</configuration>

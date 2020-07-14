@@ -1,0 +1,2 @@
+logstash-plugin install logstash-input-jdbc
+logstash-plugin install logstash-filter-alter

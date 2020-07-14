@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esdemo.modules.dao.UserDao">
+
+    <select id="getUserInfoByEmail" resultType="com.esdemo.modules.bean.UserInfoBean">
+        SELECT
+        <include refid="loginResultColumns"/>
+        FROM user_info ui
+        JOIN user_entity_info uei ON ui.user_id=uei.user_id
+        JOIN agent_info ai ON ai.agent_no = uei.entity_id
+        <include refid="loginWhere"/>
+        AND ui.mobilephone = #{mobile}
+        limit 1
+    </select>
+
+    <select id="getUserInfoByMobile" resultType="com.esdemo.modules.bean.UserInfoBean">
+        SELECT
+        <include refid="loginResultColumns"/>
+        FROM user_info ui
+        JOIN user_entity_info uei ON ui.user_id=uei.user_id
+        JOIN agent_info ai ON ai.agent_no = uei.entity_id
+        <include refid="loginWhere"/>
+        AND ui.mobilephone = #{mobile}
+        limit 1
+    </select>
+
+    <select id="getUserInfoByMobileNoAndTeam" resultType="com.esdemo.modules.bean.UserInfoBean">
+        SELECT
+        <include refid="loginResultColumns"/>
+        FROM user_info ui
+        JOIN user_entity_info uei ON ui.user_id=uei.user_id
+        JOIN agent_info ai ON ai.agent_no = uei.entity_id
+        WHERE uei.apply = 1
+        AND uei.user_type = 1
+        AND ui.mobilephone = #{mobileNo}
+        AND ui.team_id = #{teamId}
+        LIMIT 1
+    </select>
+
+    <sql id="loginWhere">
+        WHERE uei.apply = 1
+        AND uei.user_type = 1
+        AND ui.status = 1
+        AND ui.team_id = '999'
+        AND ai.agent_oem in
+        <foreach collection="agentOemList" item="agentOem" open="(" separator="," close=")">
+            #{agentOem}
+        </foreach>
+    </sql>
+
+    <sql id="loginResultColumns">
+        ui.user_id,
+        uei.manage,
+        ui.user_name,
+        ui.team_id,
+        ai.agent_no,
+        ai.agent_node,
+        ai.agent_name,
+        ai.agent_oem,
+        ai.agent_level,
+        ai.parent_id,
+        ai.one_level_id,
+        IFNULL(ai.safephone, '') safePhone,
+        IFNULL(ai.safe_password, ''),
+        ui.mobilephone phone,
+        ui.password,
+        ui.wrong_password_count,
+        ui.lock_time,
+        ai.one_level_id oneAgentNo
+    </sql>
+
+    <select id="getUserInfoByParams" resultType="map">
+        SELECT u.user_name, u.mobilephone, u.email, ui.manage, ui.status, ui.user_id
+        FROM user_info u, user_entity_info ui WHERE u.user_id = ui.user_id AND ui.entity_id = #{params.agentNo} AND
+        ui.user_type= '1'
+        <if test="params.teamId != null and params.teamId != ''">
+            AND u.team_id = #{params.teamId}
+        </if>
+        <if test="params.manage != null and params.manage != ''">
+            AND ui.manage = #{params.manage}
+        </if>
+        <if test="params.status != null and params.status != ''">
+            AND ui.status = #{params.status}
+        </if>
+        <if test="params.mobilephone != null and params.mobilephone != ''">
+            AND u.mobilephone = #{params.mobilephone}
+        </if>
+    </select>
+
+    <update id="clearWrongPasswordCount">
+        UPDATE user_info SET wrong_password_count = 0 WHERE user_id = #{userId}
+    </update>
+
+    <update id="increaseWrongPasswordCount">
+        UPDATE user_info SET wrong_password_count = wrong_password_count + 1
+        WHERE user_id = #{userId}
+    </update>
+    <update id="lockLoginUser">
+        UPDATE user_info SET wrong_password_count = 0, lock_time=now()
+        WHERE user_id = #{userId}
+    </update>
+
+    <select id="selectPushInfo" resultType="map">
+        select * from jpush_device where user_type = #{userType} and user_no = #{agentNo}
+    </select>
+
+    <insert id="savePushInfo">
+        insert into jpush_device(user_type,user_no,device_id,device_type,last_update_time,app_no)
+        values (#{userType} ,#{agentNo} ,#{jpushDevice} ,#{systemName} ,now(),#{appNo})
+    </insert>
+
+    <update id="updatePushInfo">
+        update jpush_device set
+          device_id = #{jpushDevice} ,
+          device_type = #{systemName} ,
+          last_update_time=now(),
+          app_no=#{appNo}
+        where user_type = #{userType}
+        and user_no = #{agentNo}
+    </update>
+</mapper>
